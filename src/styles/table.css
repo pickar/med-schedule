@@ -1,0 +1,168 @@
+/* ==========================================================================
+   排班表骨架：表格盒子 + 冻结表头 + 冻结首列（医生）
+   单元格 / 应休实休 / 统计行见 cells.css
+   图例 / 空状态 / 班次选择器见 table-aux.css
+   ⚠️ 本文件不得出现任何字面色值，颜色一律走 tokens.css 变量。
+
+   sticky 三条铁律（踩过就知道疼）：
+   1. border-collapse 必须是 separate。collapse 模式下边框归表格所有，
+      sticky 单元格滚动时会把自己的边框留在原地，看起来像描边掉了一半。
+   2. 所有 sticky 元素必须有**不透明背景**。透明背景的冻结列滚动时
+      会把底下的单元格透出来，糊成一团。
+   3. 层级梯度不能平：交叉角 > 表头 > 冻结列 > 普通格。
+      交叉角一旦不是最高，横向滚动时首列会盖住表头文字。
+   ========================================================================== */
+
+.schedule {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.schedule__table-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  background: var(--bg-surface);
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ========== 冻结表头 ========== */
+
+.table__head th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-sticky-head);
+  height: calc(var(--row-h) * 1.15);
+  padding: 2px;
+  background: var(--bg-chrome);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+}
+
+.table__day {
+  width: var(--cell-min-w);
+  min-width: var(--cell-min-w);
+}
+
+.table__day-num {
+  display: block;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.table__day-week {
+  display: block;
+  font-size: var(--fs-xs);
+  line-height: 1.2;
+  color: var(--text-tertiary);
+}
+
+.table__head .is-weekend {
+  background: var(--bg-weekend);
+}
+
+.table__head .is-weekend .table__day-week {
+  color: var(--color-warning);
+}
+
+/* 今天：表头用底部粗线 + 强调色，是全表唯一的「你在这里」锚点 */
+.table__head .is-today {
+  background: var(--primary-50);
+  box-shadow: inset 0 -3px 0 var(--primary-600);
+}
+
+.table__head .is-today .table__day-num {
+  color: var(--primary-700);
+}
+
+/* 左上角与右上角交叉格：层级必须最高 */
+.table__corner {
+  left: 0;
+  z-index: var(--z-table-corner);
+  width: var(--col-doctor-w);
+  min-width: var(--col-doctor-w);
+  padding-left: var(--sp-3);
+  text-align: left;
+}
+
+.table__rest-head {
+  right: 0;
+  z-index: var(--z-table-corner);
+  width: var(--col-rest-w);
+  min-width: var(--col-rest-w);
+}
+
+/* 倒数第二个是「应休」，要让开「实休」那一列的宽度 */
+.table__rest-head:nth-last-child(2) {
+  right: var(--col-rest-w);
+}
+
+/* ========== 冻结首列（医生） ========== */
+
+.table__body th,
+.table__body td {
+  height: var(--row-h);
+}
+
+.table__doctor {
+  position: sticky;
+  left: 0;
+  z-index: var(--z-table-sticky-col);
+  width: var(--col-doctor-w);
+  min-width: var(--col-doctor-w);
+  padding: 0 var(--sp-2);
+  background: var(--bg-surface);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  font-weight: var(--fw-regular);
+}
+
+.table__doctor-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--sp-2);
+  border-radius: 50%;
+  background: var(--doctor-color);
+  vertical-align: middle;
+}
+
+.table__doctor-name {
+  vertical-align: middle;
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.table__doctor-title {
+  margin-left: var(--sp-1);
+  vertical-align: middle;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.table__row:hover .table__doctor {
+  background: var(--bg-muted);
+}
+
+.table__row.is-highlighted .table__doctor {
+  background: var(--primary-50);
+}
+

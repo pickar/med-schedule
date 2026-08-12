@@ -1,0 +1,247 @@
+/* ==========================================================================
+   排班表单元格 + 右侧应休/实休 + 底部统计行
+   表格骨架 / 冻结表头 / 冻结首列见 table.css
+   ⚠️ 本文件不得出现任何字面色值，颜色一律走 tokens.css 变量。
+
+   单元格配色不在这里写死：ShiftCell 通过内联 --cell-bg / --cell-fg
+   下发 var(--shift-xxx-bg)，这里只消费。加一种班次不需要动 CSS。
+   ========================================================================== */
+
+.cell {
+  width: var(--cell-min-w);
+  min-width: var(--cell-min-w);
+  padding: 2px;
+  background: var(--bg-surface);
+}
+
+/* 周末浅底：填了班的格子靠这 2px 内边距露出一圈色，空格子则整格变色 */
+.cell.is-weekend {
+  background: var(--bg-weekend);
+}
+
+.cell.is-today {
+  background: var(--primary-50);
+}
+
+.cell__hit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--row-h) - 8px);
+  border-radius: var(--radius-cell);
+  background: var(--cell-bg, transparent);
+  color: var(--cell-fg, var(--text-tertiary));
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.cell.is-empty .cell__hit {
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.cell__hit:hover {
+  box-shadow: inset 0 0 0 2px var(--primary-300);
+}
+
+.cell__text {
+  pointer-events: none;
+}
+
+/* 轮流分配标记：右上小圆点，跟着班次前景色走，不额外抢注意力 */
+.cell__rotation {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentcolor;
+  opacity: 0.5;
+}
+
+/* 手动修改：右下角小三角（竞品同款） */
+.cell__manual {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-bottom: 6px solid var(--primary-600);
+}
+
+.cell__lock {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  opacity: 0.75;
+}
+
+/* 违规角标：左上红角 + 红描边，hover 由 title 给出原因（文案来自 validator） */
+.cell__flag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 7px solid var(--color-danger);
+  border-bottom: 7px solid transparent;
+}
+
+.cell.is-leave .cell__hit {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    var(--bg-muted) 3px,
+    var(--bg-muted) 6px
+  );
+}
+
+.cell.is-violation .cell__hit {
+  box-shadow: inset 0 0 0 2px var(--color-danger);
+}
+
+.cell.is-violation[data-severity='medium'] .cell__hit {
+  box-shadow: inset 0 0 0 2px var(--color-warning);
+}
+
+.cell.is-violation[data-severity='medium'] .cell__flag {
+  border-left-color: var(--color-warning);
+}
+
+.cell.is-violation[data-severity='low'] .cell__hit {
+  box-shadow: inset 0 0 0 1px var(--color-warning);
+}
+
+/* 定位高亮排在最后：它是用户主动发起的动作，优先级高于被动的违规描边 */
+.cell.is-highlighted .cell__hit {
+  box-shadow:
+    inset 0 0 0 2px var(--primary-600),
+    var(--shadow-sm);
+}
+
+/* ========== 右侧应休 / 实休 ========== */
+
+.table__rest {
+  position: sticky;
+  right: 0;
+  z-index: var(--z-table-sticky-col);
+  width: var(--col-rest-w);
+  min-width: var(--col-rest-w);
+  background: var(--bg-surface);
+  text-align: center;
+  color: var(--text-secondary);
+  font-weight: var(--fw-regular);
+}
+
+.table__rest:nth-last-child(2) {
+  right: var(--col-rest-w);
+}
+
+.table__rest.is-short {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: var(--fw-bold);
+}
+
+/* ========== 底部统计行 ========== */
+
+.table__foot th,
+.table__foot td {
+  height: calc(var(--row-h) - 8px);
+  background: var(--bg-chrome);
+  font-size: var(--fs-sm);
+}
+
+.table__foot .table__rest {
+  background: var(--bg-chrome);
+}
+
+.table__foot.is-stale {
+  opacity: 0.45;
+}
+
+.table__stat-label {
+  position: sticky;
+  left: 0;
+  z-index: var(--z-table-corner);
+  width: var(--col-doctor-w);
+  min-width: var(--col-doctor-w);
+  padding: 0 var(--sp-2);
+  background: var(--bg-chrome);
+  text-align: left;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+}
+
+.table__stat-chip {
+  display: inline-block;
+  min-width: 20px;
+  margin-right: var(--sp-2);
+  padding: 0 3px;
+  border-radius: var(--radius-cell);
+  background: var(--cell-bg, transparent);
+  color: var(--cell-fg, inherit);
+  font-size: var(--fs-xs);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table__stat-name {
+  vertical-align: middle;
+}
+
+.table__stat-toggle {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--sp-1);
+  margin-top: 5px;
+  border-radius: var(--radius-cell);
+  color: var(--text-tertiary);
+}
+
+.table__stat-toggle:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.table__stat {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.table__stat.is-weekend {
+  background: var(--bg-weekend);
+}
+
+.table__stat.is-today {
+  background: var(--primary-50);
+}
+
+/* 人数越界当场见血：下限不足标红，超上限标黄 */
+.table__stat.is-below {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: var(--fw-bold);
+}
+
+.table__stat.is-above {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-weight: var(--fw-bold);
+}
+
+.table__stat-row--total th,
+.table__stat-row--total td {
+  border-top: 2px solid var(--border-base);
+  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+}

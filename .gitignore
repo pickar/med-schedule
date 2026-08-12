@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.qaout/
+dist-*/
+_*.txt
+_*.log
+_ref/
+._scratch/
+.qatmp/
+install.log
+_dev_index.html

@@ -1,0 +1,245 @@
+/* ==========================================================================
+   浮层组件层：Overlay 基座 / Modal / Drawer / Popover / Toast / ConfirmDialog
+   全部通过 createPortal 挂到 body，因此层级只与 tokens 里的 --z-* 有关，
+   不受排班表滚动容器的 overflow 影响。
+   ⚠️ 本文件不得出现任何字面色值，颜色一律走 tokens.css 变量。
+   ========================================================================== */
+
+@keyframes ws-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ws-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ws-slide-left {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+
+/* ========== Overlay 基座 ========== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  z-index: var(--z-modal);
+}
+
+.overlay--center { align-items: center; justify-content: center; padding: var(--sp-4); }
+.overlay--right { align-items: stretch; justify-content: flex-end; z-index: var(--z-drawer); }
+
+.overlay__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-scrim);
+  animation: ws-fade-in var(--dur-fast) var(--ease-out);
+}
+
+/* ========== Modal ========== */
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  max-height: 100%;
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  animation: ws-pop-in var(--dur-base) var(--ease-out);
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
+}
+
+.modal__heading { flex: 1 1 auto; min-width: 0; }
+.modal__title { font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+.modal__subtitle { margin-top: var(--sp-1); font-size: var(--fs-sm); color: var(--text-tertiary); }
+
+.modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-2) var(--sp-4);
+}
+
+.modal__footer {
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* ========== Drawer ========== */
+
+.drawer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  height: 100%;
+  background: var(--bg-chrome);
+  box-shadow: var(--shadow-drawer);
+  animation: ws-slide-left var(--dur-base) var(--ease-out);
+}
+
+.drawer__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--border-base);
+}
+
+.drawer__heading { flex: 1 1 auto; min-width: 0; }
+.drawer__title { font-size: var(--fs-xl); font-weight: var(--fw-bold); }
+.drawer__subtitle { margin-top: var(--sp-1); font-size: var(--fs-sm); color: var(--text-tertiary); }
+.drawer__header-actions { display: flex; align-items: center; gap: var(--sp-1); }
+
+/* 只有 body 滚动：底部「保存」按钮必须常驻可见 */
+.drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.drawer__footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border-base);
+  background: var(--bg-surface);
+}
+
+.drawer-section__title { font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.drawer-section__hint { margin-top: var(--sp-1); font-size: var(--fs-sm); color: var(--text-tertiary); }
+.drawer-section__body { margin-top: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* ========== Popover ========== */
+
+.popover {
+  position: fixed;
+  z-index: var(--z-popover);
+  min-width: 160px;
+  max-width: min(360px, calc(100vw - var(--sp-4)));
+  padding: var(--sp-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-pop);
+  animation: ws-pop-in var(--dur-fast) var(--ease-out);
+}
+
+.popover-menu { display: flex; flex-direction: column; }
+
+.popover-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2);
+  border-radius: var(--radius-cell);
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  text-align: left;
+}
+.popover-menu__item:hover:not(:disabled) { background: var(--bg-muted); }
+.popover-menu__item:disabled { color: var(--text-disabled); }
+.popover-menu__item.is-danger { color: var(--color-danger); }
+.popover-menu__item.is-danger:hover:not(:disabled) { background: var(--color-danger-bg); }
+
+/* 菜单分组标题（如「有排班数据的月份」）：只做标签，不可点 */
+.popover-menu__title {
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
+
+/*
+ * 菜单空态 / 灰按钮的原因说明。
+ * 「点不动却不说为什么」是最常见的一类投诉，这条文字就是为它准备的。
+ */
+.popover-menu__empty {
+  margin: 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-tertiary);
+}
+
+/*
+ * 菜单尾部的状态区（移动端顶栏「更多」里的保存状态）。
+ * 与上方菜单项之间必须有分隔线：它不是可点的第 N 项，
+ * 混在一起会让用户以为「已保存 14:32」也能点。
+ */
+.popover-menu__footer {
+  margin-top: var(--sp-1);
+  padding: var(--sp-2);
+  border-top: 1px solid var(--border-light);
+}
+
+/* ========== Toast ========== */
+
+.toast-viewport {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: min(420px, calc(100vw - var(--sp-8)));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-base);
+  border-left-width: 3px;
+  border-radius: var(--radius-btn);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+  animation: ws-pop-in var(--dur-base) var(--ease-out);
+}
+
+.toast__icon { margin-top: 2px; }
+.toast__content { flex: 1 1 auto; min-width: 0; }
+.toast__message { font-size: var(--fs-md); font-weight: var(--fw-medium); }
+.toast__detail { margin-top: var(--sp-1); font-size: var(--fs-sm); color: var(--text-secondary); }
+
+.toast--info { border-left-color: var(--color-info); }
+.toast--info .toast__icon { color: var(--color-info); }
+.toast--success { border-left-color: var(--color-success); }
+.toast--success .toast__icon { color: var(--color-success); }
+.toast--warning { border-left-color: var(--color-warning); }
+.toast--warning .toast__icon { color: var(--color-warning); }
+.toast--danger { border-left-color: var(--color-danger); }
+.toast--danger .toast__icon { color: var(--color-danger); }
+
+/* ========== ConfirmDialog ========== */
+
+.confirm__message { font-size: var(--fs-md); color: var(--text-primary); }
+.confirm__detail { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--text-secondary); }
+
+/*
+ * DOM 顺序是「取消 → 确认」（让焦点默认落在取消上），
+ * 视觉顺序靠 row-reverse 翻回「取消在左、确认在右」。
+ */
+.confirm__actions { display: flex; flex-direction: row-reverse; gap: var(--sp-2); }

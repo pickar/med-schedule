@@ -1,0 +1,91 @@
+/* ==========================================================================
+   打印样式：A4 横版，隐藏所有 .no-print 交互件，铺满整张排班表。
+
+   真实 DOM 结构（来自 T04 已交付的 ScheduleTable）：
+     <main class="app-main">
+       <div class="print-schedule-title">        ← 本文件样式 + MainArea 渲染文本
+       <div class="app-main__toolbar no-print">
+       <div class="app-main__scroll">            ← overflow:auto 滚动容器
+         <div class="schedule">
+           <div class="schedule__table-wrap">     ← 也是滚动容器
+             <table class="table">                ← 真实表格类名（初版曾误写为 schedule-table，已修正）
+
+   因此本文件的选择器严格对齐上述类名（初版错写成 schedule-table 类名，在 src/
+   全目录零引用，打印整条链路失效；已修正）。颜色仍走 tokens 设计令牌变量。
+
+   四个关键修正点：
+   1. 表格类名是 `.table`，容器是 `.schedule__table-wrap`。
+   2. 打印标题由 MainArea 渲染 `.print-schedule-title`（本文件只定义样式）。
+   3. 必须解除 .app-main / .app-main__scroll / .schedule__table-wrap 的滚动与
+      高度限制，否则 31 列 × 多行的表只会打印出可视区域那一屏。
+   4. sticky 表头 / 冻结首列在打印分页时会错位，统一重置为 static。
+   ========================================================================== */
+
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+@media print {
+  /* 顶栏、左右侧栏、窄屏提示、工具条、浮层等交互件一律不打印 */
+  .no-print {
+    display: none !important;
+  }
+
+  /* 解除整条滚动链：否则只打印出第一屏可视区 */
+  .app-shell,
+  .app-body,
+  .app-main,
+  .app-main__scroll,
+  .schedule,
+  .schedule__table-wrap {
+    display: block;
+    width: 100%;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* 排班表本体：31 天列 + 冻结首列一张表铺满 A4 横版 */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+    color: var(--text-primary);
+  }
+  .table th,
+  .table td {
+    border: 1px solid var(--border-strong);
+    padding: 2px 3px;
+  }
+  /* 每页重复表头，长表跨页才有表头可读 */
+  .table thead {
+    display: table-header-group;
+  }
+  .table tbody {
+    display: table-row-group;
+  }
+
+  /* sticky 表头 / 冻结首列在打印分页时会错位，统一重置为 static */
+  .table th,
+  .table td,
+  .table thead,
+  .table tbody tr > *:first-child {
+    position: static !important;
+  }
+
+  /* 打印标题：屏幕态隐藏，打印态显示（由 MainArea 渲染文本） */
+  .print-schedule-title {
+    display: block !important;
+    font-size: 14px;
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+}
+
+/* 屏幕态下标题不占空间（由 MainArea 按需渲染） */
+.print-schedule-title {
+  display: none;
+}

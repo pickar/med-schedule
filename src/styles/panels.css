@@ -1,0 +1,343 @@
+/* ==========================================================================
+   业务面板层：左栏医生名册 + 医生抽屉 + 规则抽屉。
+   排在所有通用层之后（见 index.css），同特异度下可覆盖。
+   ⚠️ 不使用任何字面色值，颜色一律走 tokens.css 变量。
+   数据色（医生标识色 / 色板）由组件内联 style 注入，样式表只定形状与边框。
+   ========================================================================== */
+
+/* ========== 左栏 · 医生名册 ========== */
+
+.doctor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  height: 100%;
+  padding: var(--sp-3);
+}
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+}
+.search-field:focus-within { border-color: var(--primary-300); }
+.search-field__icon { flex: 0 0 auto; color: var(--text-tertiary); }
+.search-field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+}
+.search-field__input::placeholder { color: var(--text-tertiary); }
+.search-field__input:focus { outline: none; }
+.doctor-panel__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.doctor-panel__count { font-size: var(--fs-sm); color: var(--text-tertiary); }
+.doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ========== 医生卡片 ========== */
+
+.doctor-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.doctor-card:hover { border-color: var(--border-strong); }
+.doctor-card.is-highlighted {
+  border-color: var(--primary-600);
+  box-shadow: inset 0 0 0 1px var(--primary-600);
+}
+.doctor-card__dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+.doctor-card__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.doctor-card__line { display: flex; align-items: baseline; gap: var(--sp-2); }
+.doctor-card__name { font-weight: var(--fw-bold); color: var(--text-primary); font-size: var(--fs-md); }
+.doctor-card__title { flex: 0 0 auto; font-size: var(--fs-xs); color: var(--text-tertiary); }
+.doctor-card__clinic { font-size: var(--fs-xs); color: var(--text-tertiary); }
+.doctor-card__badges { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+
+/* ========== 共享表单原子（抽屉内通用） ========== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+.field:last-child { margin-bottom: 0; }
+.field--inline { flex-direction: row; align-items: center; gap: var(--sp-2); margin-bottom: 0; }
+.field--grow { flex: 1 1 auto; min-width: 0; }
+.field__label { font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-medium); }
+.field__error { font-size: var(--fs-xs); color: var(--color-danger); }
+.field__warning { font-size: var(--fs-xs); color: var(--color-warning); }
+.field__hint { font-size: var(--fs-xs); color: var(--text-tertiary); margin-top: calc(-1 * var(--sp-2)); }
+.text-input,
+.select-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+}
+.text-input:focus,
+.select-input:focus { outline: none; border-color: var(--primary-300); }
+.select-input { cursor: pointer; }
+.select-input--narrow { width: 96px; flex: 0 0 auto; }
+
+/* 色板 */
+.color-swatches { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-2) 0; }
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.is-checked {
+  border-color: var(--primary-900);
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--primary-300);
+}
+
+/* 多选标签行 */
+.chip-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* ========== 请假编辑 ========== */
+
+.leave-editor { display: flex; flex-direction: column; gap: var(--sp-2); }
+.leave-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2); }
+.leave-form .field--inline { flex: 1 1 auto; min-width: 140px; }
+.leave-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.leave-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-btn);
+}
+.leave-item__main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.leave-item__range { font-size: var(--fs-md); color: var(--text-primary); font-weight: var(--fw-medium); }
+.leave-item__meta { font-size: var(--fs-xs); color: var(--text-tertiary); }
+
+/* ========== 轮流门诊规则 ========== */
+
+.rotation-list { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.rotation-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  background: var(--bg-surface);
+}
+.rotation-item__head { display: flex; align-items: center; gap: var(--sp-2); }
+.rotation-item__doctors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-1);
+  border-top: 1px dashed var(--border-light);
+}
+
+/* ========== 规则 · 每日班次人数表 ========== */
+
+.rules-grid {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+}
+.rules-grid__row {
+  display: grid;
+  grid-template-columns: 52px 1fr 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-light);
+}
+.rules-grid__row:last-child { border-bottom: none; }
+.rules-grid__row--head { background: var(--bg-chrome); font-size: var(--fs-sm); color: var(--text-secondary); }
+.rules-grid__label { font-size: var(--fs-md); color: var(--text-primary); }
+.rules-grid__row--head .rules-grid__label { color: var(--text-secondary); }
+.rules-grid__cell { display: flex; justify-content: center; }
+
+/* ========== 空状态 ========== */
+
+.panel-empty { padding: var(--sp-6) var(--sp-4); text-align: center; font-size: var(--fs-sm); color: var(--text-tertiary); }
+.panel-empty--tight { padding: var(--sp-3) var(--sp-2); }
+
+/* ========== 右栏 · 洞察面板 ========== */
+
+.insight-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-3);
+}
+.insight-section { display: flex; flex-direction: column; gap: var(--sp-2); }
+.insight-section__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.insight-section__count {
+  flex: 0 0 auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--sp-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+/* 违规清单 */
+.violation-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.violation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-left-width: 3px;
+  border-radius: var(--radius-card);
+}
+.violation-item--high { border-left-color: var(--color-danger); }
+.violation-item--medium { border-left-color: var(--color-warning); }
+.violation-item--low { border-left-color: var(--border-strong); }
+.violation-item__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.violation-item__message { margin: 0; font-size: var(--fs-base); color: var(--text-primary); line-height: var(--lh-base); }
+.violation-item__detail { margin: 0; font-size: var(--fs-xs); color: var(--text-tertiary); line-height: var(--lh-base); }
+.violation-item__locate { flex: 0 0 auto; align-self: center; }
+
+/* 工作量均衡 */
+.workload-score { font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.workload-bars { display: flex; flex-direction: column; gap: var(--sp-2); }
+.wl-bar { display: flex; flex-direction: column; gap: 4px; }
+.wl-bar__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.wl-bar__label { font-size: var(--fs-sm); color: var(--text-secondary); }
+.wl-bar__value { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.wl-bar__track { height: 6px; border-radius: var(--radius-pill); background: var(--bg-muted); overflow: hidden; }
+.wl-bar__fill { height: 100%; border-radius: var(--radius-pill); transition: width var(--dur-base) var(--ease-out); }
+.workload-exempt {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bg-muted);
+  border-radius: var(--radius-btn);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+.workload-exempt__badge {
+  flex: 0 0 auto;
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--border-base);
+  color: var(--primary-800);
+  font-weight: var(--fw-bold);
+}
+.workload-exempt__names { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workload-extremes { display: flex; flex-direction: column; gap: var(--sp-1); }
+.workload-extreme {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.workload-extreme__tag { flex: 0 0 auto; color: var(--text-tertiary); }
+.workload-extreme__name { flex: 1 1 auto; min-width: 0; color: var(--text-primary); font-weight: var(--fw-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workload-extreme__val { flex: 0 0 auto; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* 生成说明 */
+.note-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.note-item { display: flex; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); background: var(--bg-chrome); border: 1px solid var(--border-light); border-radius: var(--radius-card); }
+.note-item__stage {
+  flex: 0 0 auto;
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  padding-top: 2px;
+}
+.note-item__message { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--fs-base); color: var(--text-primary); line-height: var(--lh-base); }
+
+/* 休息天数不足 */
+.rest-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.rest-item { display: flex; flex-direction: column; gap: 4px; }
+.rest-item__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.rest-item__name { font-size: var(--fs-base); color: var(--text-primary); font-weight: var(--fw-medium); }
+.rest-item__gap { flex: 0 0 auto; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--color-danger); }
+.rest-item__track { height: 6px; border-radius: var(--radius-pill); background: var(--bg-muted); overflow: hidden; }
+.rest-item__fill { height: 100%; border-radius: var(--radius-pill); background: var(--primary-600); transition: width var(--dur-base) var(--ease-out); }
+.rest-item__progress { font-size: var(--fs-xs); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* ========== 左栏底部 · 数据备份 ========== */
+
+.backup-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+/* 文件输入本身隐藏，只通过按钮触发；保留可聚焦性（键盘可达） */
+.backup-controls__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

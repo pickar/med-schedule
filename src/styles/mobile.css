@@ -1,0 +1,182 @@
+/* ==========================================================================
+   移动端适配层：底部 Tab 栏 + 单栏切换 + 顶栏收窄 + 浮层铺满
+   ⚠️ 本文件不得出现任何字面色值，颜色一律走 tokens.css 变量。
+
+   为什么单独成文件而不是并进 layout.css：
+   1. layout.css 已接近 300 行硬上限，再塞 140 行移动端规则就会破线；
+   2. 移动端适配是一整层「在某个断点之上全部失效」的覆盖规则，
+      它必须排在所有被覆盖对象（layout / components / overlays / table）之后，
+      靠加载顺序而不是提高选择器特异度来取胜。
+      放在 layout.css 里（第 3 位加载）就得靠 !important 硬顶，那是另一种债。
+
+   断点 768px 与 src/constants/breakpoints.ts 的 MOBILE_MAX 必须同值：
+   JS 侧 useIsMobile() 读的就是那个常量，改一边不改另一边，
+   会出现「CSS 已经切成单栏、顶栏还按桌面端渲染」这类最难查的错位。
+   scripts/smokeRebrand.tsx 对这两处做一致性断言。
+   ========================================================================== */
+
+/* ========== 底部 Tab 栏（基础外观，桌面端隐藏） ========== */
+
+/*
+ * BottomTabBar 组件无条件渲染，「显不显示」只由这一条 CSS 说了算。
+ * JS 里再判一次断点，两套判断迟早会在某一帧给出不同答案，露出一条空白底栏。
+ */
+.app-tabbar {
+  display: none;
+}
+
+.app-tabbar__list {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.app-tabbar__tab {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-1) 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-tight);
+  cursor: pointer;
+  /* 选中态用 2px 顶边而不是整块填色：底栏要尽量安静，别跟排班表抢视觉重量 */
+  border-top: 2px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.app-tabbar__tab.is-active {
+  color: var(--primary-700);
+  border-top-color: var(--primary-600);
+  font-weight: var(--fw-medium);
+}
+
+.app-tabbar__label {
+  white-space: nowrap;
+}
+
+/* ========== 768 以下：三栏改单栏 + 底部 Tab 切换 ========== */
+
+@media (max-width: 768px) {
+  /* 多加一行给底部 Tab 栏，主体高度自动扣掉，内容不会被压在栏下面 */
+  .app-shell {
+    grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--tabbar-h);
+  }
+
+  /* 三列坍成一列；折叠态的列宽变量在这里一律失效 */
+  .app-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-body[data-left='collapsed'],
+  .app-body[data-right='collapsed'] {
+    --col-left: minmax(0, 1fr);
+    --col-right: minmax(0, 1fr);
+  }
+
+  /*
+   * 三块内容全部叠在同一个网格单元里，靠 data-active-tab 决定谁可见。
+   * 用 display: none 而不是 visibility / opacity：被隐藏的那块必须彻底退出
+   * 无障碍树与 Tab 键序，否则手机上按 Tab 会掉进一片看不见的名册表单里。
+   */
+  .app-panel,
+  .app-main {
+    grid-column: 1;
+    grid-row: 1;
+    display: none;
+  }
+
+  .app-shell[data-active-tab='roster'] .app-panel--left,
+  .app-shell[data-active-tab='insight'] .app-panel--right {
+    display: flex;
+  }
+
+  .app-shell[data-active-tab='schedule'] .app-main {
+    display: flex;
+  }
+
+  /* 单栏时左右边框只是多余的一道竖线 */
+  .app-panel--left,
+  .app-panel--right {
+    border-left: none;
+    border-right: none;
+  }
+
+  /*
+   * 手机上没有「折叠」的余地：useResponsiveCollapse 在 1200 / 960 档
+   * 留下的 is-collapsed 会一路带到手机上，必须整体回退成展开态，
+   * 否则切到「名册」页签只会看到一条竖排文字。
+   */
+  .app-panel.is-collapsed .app-panel__scroll,
+  .app-panel.is-collapsed .app-panel__footer,
+  .app-panel.is-collapsed .app-panel__header-actions {
+    display: flex;
+  }
+
+  .app-panel.is-collapsed .app-panel__title {
+    display: block;
+  }
+
+  .app-panel.is-collapsed .app-panel__header {
+    flex-direction: row;
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .app-panel.is-collapsed .app-panel__rail {
+    display: none;
+  }
+
+  /* 顶栏收窄：只留品牌图标 + 月份导航 + 生成 + 更多（其余进 MoreMenu） */
+  .app-topbar {
+    gap: var(--sp-2);
+    padding: 0 var(--sp-2);
+  }
+
+  .app-topbar__brand-text {
+    display: none;
+  }
+
+  .app-tabbar {
+    display: block;
+    grid-row: 3;
+    background: var(--bg-chrome);
+    border-top: 1px solid var(--border-base);
+    box-shadow: var(--shadow-tabbar);
+    z-index: var(--z-tabbar);
+    /* iOS 全面屏的 Home 指示条会盖住最后一排像素 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /*
+   * 抽屉铺满全屏。Drawer 组件自带 --drawer-*-w 行内宽度，
+   * 行内样式只有 !important 顶得住；改组件默认值会连累桌面端，得不偿失。
+   */
+  .overlay--right .drawer {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .drawer__body {
+    padding: var(--sp-3);
+  }
+
+  /* 居中浮层留白收紧，小屏上 16px 边距会把 Modal 挤得很窄 */
+  .overlay--center {
+    padding: var(--sp-2);
+  }
+
+  /* Toast 贴底会撞上 Tab 栏，整体往上抬一格并改成通栏 */
+  .toast-viewport {
+    right: var(--sp-2);
+    left: var(--sp-2);
+    bottom: calc(var(--tabbar-h) + var(--sp-2) + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
+}

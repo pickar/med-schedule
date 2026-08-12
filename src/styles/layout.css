@@ -1,0 +1,297 @@
+/* ==========================================================================
+   布局层：顶栏 + 三栏骨架 + 滚动容器 + 响应式降级
+   本文件只管「格子怎么分、谁负责滚动」，不涉及任何组件外观。
+   ========================================================================== */
+
+/*
+ * 整页两行网格：顶栏定高，主体吃满剩余高度。
+ * 第二行必须写 minmax(0, 1fr) 而不是 1fr —— grid 轨道默认 min-height 是 auto，
+ * 内容一长就会把轨道撑高，滚动条跑到 <body> 上，sticky 表头随即失效。
+ */
+.app-shell {
+  display: grid;
+  grid-template-rows: var(--topbar-h) minmax(0, 1fr);
+  height: 100%;
+  background: var(--bg-app);
+}
+
+/* ========== 顶栏 ========== */
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  background: var(--bg-chrome);
+  border-bottom: 1px solid var(--border-base);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: var(--z-topbar);
+}
+
+.app-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--primary-700);
+  flex: 0 0 auto;
+}
+
+.app-topbar__name {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+}
+
+.app-topbar__slogan {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.app-topbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+}
+
+.app-topbar__spacer {
+  flex: 1 1 auto;
+  min-width: var(--sp-2);
+}
+
+/* ========== 月份导航 ========== */
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+}
+
+/*
+ * 月份标签本身是下拉触发器。做成低调的文字按钮而不是标准按钮：
+ * 它在视觉上首先得是「当前月份」这条信息，其次才是可点的控件。
+ */
+.month-nav__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  /* 等宽数字：切月时宽度不跳动，旁边的按钮才不会左右晃 */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.month-nav__label:hover {
+  background: var(--bg-muted);
+}
+
+/* 焦点环走 base.css 的全局 :focus-visible，这里不再重复定义 */
+
+/* 「本月有数据」的小圆点，尺寸压到 6px：它是提示，不该抢月份文字的注意力 */
+.month-nav__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex: 0 0 auto;
+}
+
+/* ========== 保存状态 ========== */
+
+.save-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+
+.save-indicator .badge {
+  gap: var(--sp-1);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 窄屏优先牺牲 slogan，再牺牲品牌名，操作按钮永远留着 */
+@media (max-width: 1100px) {
+  .app-topbar__slogan {
+    display: none;
+  }
+}
+
+/* ========== 三栏主体 ========== */
+
+/*
+ * 折叠态通过 data 属性切换列宽变量，而不是切换 grid-template-columns 整条声明。
+ * 好处是宽度过渡只需给一个自定义属性做动画，且左右两栏互不干扰。
+ */
+.app-body {
+  --col-left: var(--panel-left-w);
+  --col-right: var(--panel-right-w);
+
+  display: grid;
+  grid-template-columns: var(--col-left) minmax(0, 1fr) var(--col-right);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  transition: grid-template-columns var(--dur-base) var(--ease-out);
+}
+
+.app-body[data-left='collapsed'] {
+  --col-left: var(--panel-collapsed-w);
+}
+
+.app-body[data-right='collapsed'] {
+  --col-right: var(--panel-collapsed-w);
+}
+
+/* ========== 侧栏 ========== */
+
+.app-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.app-panel--left {
+  border-right: 1px solid var(--border-base);
+}
+
+.app-panel--right {
+  border-left: 1px solid var(--border-base);
+}
+
+.app-panel__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.app-panel__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+/* 侧栏内容区是独立滚动容器，长名册不会顶动中间的排班表 */
+.app-panel__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.app-panel__footer {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-surface);
+}
+
+/* 折叠态：只留一条竖排标签 + 展开按钮 */
+.app-panel.is-collapsed .app-panel__scroll,
+.app-panel.is-collapsed .app-panel__footer,
+.app-panel.is-collapsed .app-panel__title,
+.app-panel.is-collapsed .app-panel__header-actions {
+  display: none;
+}
+
+.app-panel.is-collapsed .app-panel__header {
+  flex-direction: column;
+  padding: var(--sp-2) 0;
+  border-bottom: none;
+}
+
+.app-panel__rail {
+  display: none;
+  writing-mode: vertical-rl;
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.app-panel.is-collapsed .app-panel__rail {
+  display: block;
+}
+
+/* ========== 中间主区 ========== */
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-main__toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+}
+
+.app-main__title {
+  flex: 0 0 auto;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+}
+
+/*
+ * 排班表的滚动容器。T04 的 sticky 表头与冻结首列全部依赖这一层：
+ * - overflow: auto 建立滚动上下文，sticky 才有参照物
+ * - min-height / min-width: 0 让 flex 子项允许收缩，否则表格会把容器撑破
+ * - scroll-padding 预留出表头与首列的厚度，
+ *   洞察面板「定位」调用 scrollIntoView 时才不会把目标格藏在表头底下
+ * - padding 必须为 0：内边距同样属于可滚动区域，
+ *   `position: sticky; left: 0` 会钉在 scrollport 边缘而不是内容边缘，
+ *   留了横向 padding 就会看到冻结列压在留白上「浮」了一截。
+ *   需要留白的周边件（图例等）自己加 padding。
+ */
+.app-main__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: 0;
+  scroll-padding-top: calc(var(--row-h) * 2);
+  scroll-padding-left: var(--col-doctor-w);
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-main__scroll {
+    scroll-behavior: auto;
+  }
+  .app-body {
+    transition: none;
+  }
+}

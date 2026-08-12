@@ -1,0 +1,38 @@
+/* ==========================================================================
+   样式总入口。仅此一个文件被 main.tsx 引入，其余样式表一律在这里汇总。
+
+   顺序即优先级，不得随意调换：
+   1. tokens      设计令牌，必须最先加载，后面所有文件都引用它的变量
+   2. base        reset 与全局元素样式
+   3. layout      页面骨架与滚动容器
+   4. components  常驻通用控件外观
+   5. overlays    浮层类组件（Portal 到 body，必须排在 components 之后）
+   6. table       表格骨架（冻结表头 / 冻结首列）
+   7. cells       单元格 / 应休实休列 / 底部统计行
+   8. table-aux   表格周边件（图例 / 空状态 / 班次选择器）
+   9. panels     业务面板
+  10. mobile     移动端适配覆盖层
+  11. print      打印
+   业务层样式永远排在通用层之后，才能在同特异度下覆盖。
+
+   mobile 必须排在 panels 之后、print 之前：它是「768px 以下推翻前面所有布局决定」
+   的覆盖层，靠加载顺序取胜而不是靠提高选择器特异度；排在前面就得靠 !important 硬顶。
+   print 仍在最后——打印时不存在视口断点，它的优先级高于一切屏幕样式。
+
+   表格拆成三个文件不是洁癖，是 300 行硬上限：
+   骨架 + 单元格 + 周边件揉在一起接近 700 行，必须切开。
+   cells 必须排在 table 之后：单元格的 is-highlighted 描边要能
+   覆盖骨架层给 sticky 列铺的背景。
+   ========================================================================== */
+
+@import './tokens.css';
+@import './base.css';
+@import './layout.css';
+@import './components.css';
+@import './overlays.css';
+@import './table.css';
+@import './cells.css';
+@import './table-aux.css';
+@import './panels.css';
+@import './mobile.css';
+@import './print.css';

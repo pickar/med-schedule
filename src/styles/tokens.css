@@ -1,0 +1,164 @@
+/* ==========================================================================
+   设计令牌 · 医键排班
+   主色系为深青（medical teal），色值取自 DESIGN 增量文档第 1.1 节。
+   ⚠️ 不得自行调色。新增颜色需先在设计文档登记。
+   ⚠️ 班次色标（--shift-*）与医生色卡（constants/palette.ts）属于「数据语义色」，
+      不随品牌换肤变动，改动会导致历史排班表配色漂移。
+   ========================================================================== */
+
+:root {
+  /* ========== 主色 · 深青 ==========
+     600 为品牌主色（按钮底 / 图标）；700 为 hover 与正文级强调；
+     300 为描边 / 焦点环；50 为浅底提示。 */
+  --primary-900: #00363d;
+  --primary-800: #00545f;
+  --primary-700: #006c7c; /* 主按钮 hover / 文字级强调 */
+  --primary-600: #00838f; /* 主色 */
+  --primary-300: #7fc3cc; /* 描边 / 焦点环 */
+  --primary-50: #e4edf2; /* 浅底提示（实测修订值） */
+
+  /* ========== 背景 / 浅色 ========== */
+  --bg-app: #f2f7f9; /* 应用底色 */
+  --bg-surface: #ffffff; /* 卡片 / 表格底 */
+  --bg-muted: #edf3f6; /* 次级背景 */
+  --bg-chrome: #ffffff; /* 顶栏 / 抽屉底（原 --bg-cream） */
+  --bg-weekend: #eaf2f5; /* 周末列底色（原 --bg-cream-2，实测修订值） */
+  --bg-neutral: #fafcfd; /* 空单元格占位 */
+  --bg-scrim: rgba(9, 38, 46, 0.45); /* 遮罩 */
+
+  /* ========== 语义色 ========== */
+  --color-danger: #c62828;
+  --color-danger-bg: #ffebee;
+  --color-success: #558b2f;
+  --color-success-bg: #f1f8e9;
+  --color-info: #00695c;
+  --color-info-bg: #e0f7fa;
+  --color-purple: #4527a0;
+  --color-purple-bg: #ede7f6;
+  --color-warning: #f57f17;
+  --color-warning-bg: #fffde7;
+
+  /* ========== 文字 ========== */
+  --text-primary: #0f2a33;
+  --text-secondary: #4a6570;
+  --text-tertiary: #546e78; /* 实测修订值，对 --bg-app 满足 AA */
+  --text-inverse: #ffffff;
+  --text-disabled: #a8bcc4;
+
+  /* ========== 边框 ========== */
+  --border-light: #e4ecef;
+  --border-base: #d2dee3;
+  --border-strong: #b3c6cd;
+
+  /* ========== 滚动条 ========== */
+  --scrollbar-fg: #b3c6cd;
+  --scrollbar-fg-hover: #7e9ba6;
+
+  /* ========== 字体 ========== */
+  --font-family: 'Nunito', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'SFMono-Regular', 'Cascadia Mono', 'Consolas', monospace;
+  --fs-xs: 11px; /* 角标 / 星期行 */
+  --fs-sm: 12px; /* 单元格简写 / 徽标 */
+  --fs-base: 13px; /* 正文 / 表格 */
+  --fs-md: 14px; /* 表单 / 按钮 */
+  --fs-lg: 16px; /* 分区标题 */
+  --fs-xl: 18px; /* 抽屉标题 */
+  --fs-2xl: 20px; /* 品牌名 */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+  --lh-tight: 1.2;
+  --lh-base: 1.5;
+
+  /* ========== 间距（4px 基准）========== */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* ========== 圆角 ========== */
+  --radius-cell: 4px;
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+
+  /* ========== 阴影（冷调，与深青主色同源）========== */
+  --shadow-sm: 0 1px 2px rgba(9, 38, 46, 0.06);
+  --shadow-card: 0 2px 8px rgba(9, 38, 46, 0.08);
+  --shadow-pop: 0 4px 16px rgba(9, 38, 46, 0.14);
+  --shadow-drawer: -4px 0 24px rgba(9, 38, 46, 0.16);
+  --shadow-tabbar: 0 -2px 12px rgba(9, 38, 46, 0.08); /* 底部 Tab 栏，投影朝上 */
+
+  /* ========== 布局尺寸 ========== */
+  --topbar-h: 56px;
+  --tabbar-h: 56px; /* 移动端底部 Tab 栏高度 */
+  --panel-left-w: 260px;
+  --panel-right-w: 300px;
+  --panel-collapsed-w: 56px;
+  --drawer-rules-w: 520px;
+  --drawer-doctor-w: 420px;
+  --row-h: 40px; /* 表格行高 */
+  --cell-min-w: 44px; /* 单元格最小宽度，等于最小可点触面积，移动端不得再压缩 */
+  --col-doctor-w: 140px; /* 冻结首列 */
+  --col-rest-w: 56px; /* 应休 / 实休列 */
+
+  /* ========== 断点 ==========
+     ⚠️ CSS 自定义属性不能用于 @media 条件，此处仅作单一事实来源的登记；
+     实际断点写死 768px，且与 src/constants/breakpoints.ts 的 MOBILE_MAX 保持一致。 */
+  --bp-mobile: 768px;
+
+  /* ========== 层级 ========== */
+  --z-table-cell: 1;
+  --z-table-sticky-col: 2;
+  --z-table-sticky-head: 3;
+  --z-table-corner: 4; /* 表头与首列交叉处 */
+  --z-topbar: 10;
+  --z-tabbar: 15; /* 底部 Tab 栏：高于内容，低于抽屉 */
+  --z-drawer: 20;
+  --z-popover: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+
+  /* ========== 动效 ========== */
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ========== 班次色标（与 constants/shifts.ts 一一对应，改动需同步）======
+     全部前景/背景组合已满足 WCAG AA 4.5:1。
+     ⚠️ 品牌改色不动此块：这 11 组是数据语义色，历史排班表依赖它们保持稳定。
+     QA-BUG-04 修正：门诊 / 连班 / 副班原文字色实测 3.78 / 3.46 / 2.58，仅加深文字色。 */
+  --shift-clinic-bg: #f1f8e9;
+  --shift-clinic-fg: #33691e; /* 6.08:1（原 #558b2f 3.78:1） */
+  --shift-expertClinic-bg: #ede7f6;
+  --shift-expertClinic-fg: #4527a0;
+  --shift-emergency-bg: #ffebee;
+  --shift-emergency-fg: #c62828;
+  --shift-dayShift-bg: #e0f7fa;
+  --shift-dayShift-fg: #00695c;
+  --shift-nightShift-bg: #ede7f6;
+  --shift-nightShift-fg: #311b92;
+  --shift-continuousShift-bg: #fff3e0;
+  --shift-continuousShift-fg: #bf360c; /* 5.11:1（原 #e65100 3.46:1） */
+  --shift-deputyShift-bg: #fffde7;
+  --shift-deputyShift-fg: #84600a; /* 5.59:1（原 #f57f17 2.58:1） */
+  --shift-chiefDuty-bg: #fce4ec;
+  --shift-chiefDuty-fg: #ad1457;
+  --shift-ward-bg: #e8f5e9;
+  --shift-ward-fg: #2e7d32;
+  --shift-rest-bg: #efebe9;
+  --shift-rest-fg: #6d4c41;
+  --shift-postNightRest-bg: #d7ccc8;
+  --shift-postNightRest-fg: #4e342e;
+}
+
+/* 用户偏好减弱动效时，全局关闭过渡与动画（无障碍 P0-10） */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+  }
+}

@@ -1,0 +1,272 @@
+/* ==========================================================================
+   排班表周边件：班次图例 / 空状态三步引导 / 班次选择器
+   表格本体见 table.css。拆开是因为单文件 300 行硬上限。
+   ⚠️ 本文件不得出现任何字面色值，颜色一律走 tokens.css 变量。
+   ========================================================================== */
+
+/* ========== 班次图例 ========== */
+
+.legend {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--bg-app);
+}
+
+.legend__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.legend__title {
+  font-weight: var(--fw-medium);
+}
+
+.legend__note {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.legend__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.legend__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-cell);
+  background: var(--cell-bg, transparent);
+  color: var(--cell-fg, inherit);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+/* ========== 空状态三步引导 ========== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 100%;
+  padding: var(--sp-8) var(--sp-4);
+  text-align: center;
+}
+
+/*
+ * 换肤后底色从米黄变成白，原来的 var(--bg-chrome) 在同为白色的表格区里彻底消失，
+ * 图标像是浮在半空。改用 --primary-50 托底，顺带让品牌图标在首访页有个落点。
+ */
+.empty-state__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
+
+/* 品牌 slogan：排在标题上方，字号压到最小档，只做气氛不抢主文案 */
+.empty-state__slogan {
+  margin: 0;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.empty-state__title {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+.empty-state__subtitle {
+  font-size: var(--fs-md);
+  color: var(--text-secondary);
+}
+
+.empty-state__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 200px));
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty-state__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-state__step-icon {
+  color: var(--primary-600);
+}
+
+.empty-state__step-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+.empty-state__step-desc {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-tertiary);
+}
+
+/* 三步在窄屏改竖排，卡片挤成一条会把文案折成锯齿（断点对齐 MOBILE_MAX） */
+@media (max-width: 768px) {
+  .empty-state__steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ========== 班次选择器（锚定浮层内） ========== */
+
+.shift-picker {
+  width: 288px;
+}
+
+.shift-picker__head {
+  padding: 0 var(--sp-1) var(--sp-2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.shift-picker__title {
+  display: block;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+.shift-picker__doctor {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.shift-picker__doctor-title {
+  padding: 0 var(--sp-1);
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.shift-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0;
+}
+
+.shift-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: var(--sp-1) 2px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-cell);
+  background: var(--cell-bg, transparent);
+  color: var(--cell-fg, inherit);
+}
+
+.shift-option:hover {
+  border-color: var(--border-strong);
+}
+
+.shift-option.is-selected {
+  border-color: var(--primary-600);
+  box-shadow: inset 0 0 0 1px var(--primary-600);
+}
+
+.shift-option__short {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  line-height: 1.15;
+}
+
+.shift-option__label {
+  font-size: var(--fs-xs);
+  opacity: 0.85;
+}
+
+.shift-option__check {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+}
+
+.shift-picker__foot {
+  display: flex;
+  gap: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-light);
+}
+
+.shift-picker__action {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  height: 30px;
+  border-radius: var(--radius-btn);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.shift-picker__action:hover:not(:disabled) {
+  background: var(--border-base);
+  color: var(--text-primary);
+}
+
+.shift-picker__action:disabled {
+  opacity: 0.45;
+}
+
+.shift-picker__action.is-active {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.shift-picker__action.is-danger:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
