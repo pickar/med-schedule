@@ -38,6 +38,7 @@ export interface MoreMenuProps {
   onUndo: () => void;
   onRedo: () => void;
   onOpenRules: () => void;
+  onOpenShiftCycle: () => void;
   onExportCsv: () => void;
   onExportPng: () => void;
   onPrint: () => void;
@@ -56,6 +57,7 @@ export const MoreMenu = memo(function MoreMenu(props: MoreMenuProps): React.Reac
     onUndo,
     onRedo,
     onOpenRules,
+    onOpenShiftCycle,
     onExportCsv,
     onExportPng,
     onPrint,
@@ -111,6 +113,9 @@ export const MoreMenu = memo(function MoreMenu(props: MoreMenuProps): React.Reac
           </MenuItem>
           <MenuItem onClick={runAndClose(onOpenRules)} icon={<Icon name="sliders" size={15} />}>
             {TEXTS.rulesButton}
+          </MenuItem>
+          <MenuItem onClick={runAndClose(onOpenShiftCycle)} icon={<Icon name="repeat" size={15} />}>
+            {TEXTS.shiftCycleButton}
           </MenuItem>
           <MenuItem
             onClick={runAndClose(onExportCsv)}

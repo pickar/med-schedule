@@ -43,6 +43,8 @@ export function createInitialUIState(): UIState {
     highlightCell: null,
     statsExpanded: false,
     legendExpanded: false,
+    shiftCycleOpen: false,
+    shiftCycleDoctorId: null,
     generating: false,
     lastDiagnostics: [],
     saveStatus: 'idle',
@@ -157,6 +159,8 @@ function mutate(state: AppState, action: DataAction): AppState {
       return schedule.applyGenerated(state, action.payload.month, action.payload.entries);
     case 'schedule/clearMonth':
       return schedule.clearMonth(state, action.payload.month);
+    case 'schedule/applyShiftCycle':
+      return schedule.applyShiftCycle(state, action.payload);
     case 'app/clearAll':
       return clearAllData(state);
     default:
@@ -213,6 +217,8 @@ function labelOf(state: AppState, action: DataAction): string {
       return `生成${formatMonthLabel(action.payload.month)}排班`;
     case 'schedule/clearMonth':
       return `清空${formatMonthLabel(action.payload.month)}排班`;
+    case 'schedule/applyShiftCycle':
+      return `轮班：${nameOf(state, action.payload.doctorId)} ${formatMD(action.payload.startDate)}–${formatMD(action.payload.endDate)}`;
     case 'app/clearAll':
       return '清空全部数据';
     default:

@@ -11,6 +11,8 @@
 import type { DaySchedule, MonthSchedule, ScheduleEntry, ShiftType } from '../../types/domain';
 import type { AppState } from '../../types/state';
 import { monthOfDate } from '../../lib/date';
+import type { DayOutcome, ShiftCyclePlan } from '../../core/shiftCycle';
+import { collectWrites, planShiftCycle } from '../../core/shiftCycle';
 
 /** 取某月排班，不存在时返回空对象（注意：返回的是新对象，只读用途） */
 export function getMonthSchedule(state: AppState, month: string): MonthSchedule {
@@ -193,4 +195,76 @@ export function countLockedCells(state: AppState, month: string): number {
     }
   }
   return count;
+}
+
+/**
+ * 应用一段轮班（形态 A：班次序列循环·按医生）。
+ *
+ * 入口从 state 自取医生 / leaves / schedules 并重算 plan，保证「预览即实际写入」。
+ * 若医生不存在或实际落库条目为空，返回原 state 引用（不进撤销栈）。
+ * 逐月用私有 `withMonth/withDay` 写入，未涉及月份保持原引用以保 memo。
+ */
+export function applyShiftCycle(
+  state: AppState,
+  payload: {
+    doctorId: string;
+    sequence: ShiftType[];
+    startDate: string;
+    endDate: string;
+    overwrite: boolean;
+  },
+): AppState {
+  const doctor = state.doctors.find((d) => d.id === payload.doctorId);
+  if (!doctor) {
+    return state;
+  }
+
+  const plan: ShiftCyclePlan = planShiftCycle({
+    doctorId: payload.doctorId,
+    sequence: payload.sequence,
+    startDate: payload.startDate,
+    endDate: payload.endDate,
+    overwrite: payload.overwrite,
+    leaves: doctor.leaves ?? [],
+    schedules: state.schedules,
+  });
+
+  const writes = collectWrites(plan);
+  if (writes.length === 0) {
+    // 无改动即无历史：返回原引用，reducer 的 applyData 出口据此跳过 push
+    return state;
+  }
+
+  // 按月分组，未涉及月份保持原引用
+  const byMonth = new Map<string, DayOutcome[]>();
+  for (const outcome of writes) {
+    const month = monthOfDate(outcome.date);
+    const list = byMonth.get(month);
+    if (list) {
+      list.push(outcome);
+    } else {
+      byMonth.set(month, [outcome]);
+    }
+  }
+
+  let next = state;
+  for (const [month, outcomes] of byMonth) {
+    const monthSchedule = next.schedules[month] ?? {};
+    let day = monthSchedule;
+    for (const outcome of outcomes) {
+      const existing = day[outcome.date]?.[payload.doctorId];
+      const entry: ScheduleEntry = {
+        doctorId: payload.doctorId,
+        shiftType: outcome.shiftType,
+        // 手动轮班写入：非轮流产物、标记手动、兜底保留原锁定态
+        isRotation: false,
+        manual: true,
+        locked: existing?.locked ?? false,
+      };
+      const prevDay = day[outcome.date] ?? {};
+      day = withDay(day, outcome.date, { ...prevDay, [payload.doctorId]: entry });
+    }
+    next = withMonth(next, month, day);
+  }
+  return next;
 }

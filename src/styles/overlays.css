@@ -243,3 +243,10 @@
  * 视觉顺序靠 row-reverse 翻回「取消在左、确认在右」。
  */
 .confirm__actions { display: flex; flex-direction: row-reverse; gap: var(--sp-2); }
+
+/* ========== 轮班弹窗（浮层内预览限高滚动）============
+   ⚠️ 颜色一律走 tokens.css 变量；班次色只走 --shift-${key}-bg/fg。 */
+
+.shift-cycle-preview .cycle-preview__list {
+  max-height: min(40vh, 280px);
+}

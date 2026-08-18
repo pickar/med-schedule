@@ -58,6 +58,10 @@ export interface UIState {
   highlightCell: CellRef | null;
   statsExpanded: boolean;
   legendExpanded: boolean;
+  /** 轮班弹窗是否打开（P2-1 按医生循环班次序列） */
+  shiftCycleOpen: boolean;
+  /** 轮班弹窗预选医生 id，来自医生抽屉「设轮班」；null 表示未预选 */
+  shiftCycleDoctorId: string | null;
   generating: boolean;
   /**
    * 最近一次生成产出的诊断，供洞察面板「生成说明」解释「为什么这样排」。
@@ -136,6 +140,16 @@ export type Action =
       payload: { month: string; entries: Record<string, Record<string, ScheduleEntry>> };
     }
   | { type: 'schedule/clearMonth'; payload: { month: string } }
+  | {
+      type: 'schedule/applyShiftCycle';
+      payload: {
+        doctorId: string;
+        sequence: ShiftType[];
+        startDate: string;
+        endDate: string;
+        overwrite: boolean;
+      };
+    }
   // --- 历史 ---
   | { type: 'history/undo' }
   | { type: 'history/redo' }

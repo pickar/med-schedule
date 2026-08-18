@@ -76,6 +76,10 @@ export function TopBar(): React.ReactElement {
     dispatch({ type: 'ui/patch', payload: { activeDrawer: 'rules' } });
   }, [dispatch]);
 
+  const handleOpenShiftCycle = useCallback((): void => {
+    dispatch({ type: 'ui/patch', payload: { shiftCycleOpen: true, shiftCycleDoctorId: null } });
+  }, [dispatch]);
+
   const handleUndo = useCallback((): void => {
     dispatch({ type: 'history/undo' });
   }, [dispatch]);
@@ -193,6 +197,7 @@ export function TopBar(): React.ReactElement {
             onExportCsv={handleExportCsv}
             onExportPng={handleExportPng}
             onPrint={handlePrint}
+            onOpenShiftCycle={handleOpenShiftCycle}
             onRetrySave={retrySave}
           />
         </div>
@@ -229,6 +234,15 @@ export function TopBar(): React.ReactElement {
             onExportPng={handleExportPng}
             onPrint={handlePrint}
           />
+
+          <Button
+            variant="secondary"
+            icon="repeat"
+            active={state.ui.shiftCycleOpen}
+            onClick={handleOpenShiftCycle}
+          >
+            {TEXTS.shiftCycleButton}
+          </Button>
 
           <Button
             variant="secondary"

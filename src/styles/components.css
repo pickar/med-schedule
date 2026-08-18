@@ -218,3 +218,103 @@
 
 .placeholder--grow { flex: 1 1 auto; min-height: 0; }
 .placeholder__title { font-size: var(--fs-md); font-weight: var(--fw-medium); color: var(--text-secondary); }
+
+/* ========== 轮班（P2-1）============
+   ⚠️ 颜色一律走 tokens.css 变量；班次色只走 --shift-${key}-bg/fg，不在本文件写死色值。 */
+
+.shift-cycle { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.shift-cycle__dates { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+.shift-cycle__dates .field--inline { flex: 1 1 160px; }
+
+.sequence-editor { display: flex; flex-direction: column; gap: var(--sp-2); }
+.sequence-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+
+.sequence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--cell-bg, var(--bg-muted));
+  color: var(--cell-fg, var(--text-primary));
+  border: 1px solid var(--border-light);
+  /* 触摸靶 ≥ 32px */
+  min-height: 32px;
+}
+.sequence-chip__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--cell-fg, var(--text-secondary)) 18%, transparent);
+  color: var(--cell-fg, var(--text-secondary));
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+.sequence-chip__short { font-weight: var(--fw-bold); font-size: var(--fs-sm); }
+.sequence-chip__label { font-size: var(--fs-sm); }
+.sequence-chip__actions { display: inline-flex; gap: 2px; margin-left: var(--sp-1); }
+
+.sequence-append { display: flex; align-items: center; gap: var(--sp-2); }
+.sequence-append .select-input { flex: 1 1 auto; }
+
+.shift-cycle-preview { display: flex; flex-direction: column; gap: var(--sp-2); }
+.shift-cycle-summary { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+.cycle-preview__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-1);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-btn);
+  background: var(--bg-neutral);
+  /* 预览区限高滚动 */
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cycle-preview__item {
+  display: grid;
+  grid-template-columns: 48px 28px 1fr auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-cell);
+  background: var(--bg-surface);
+  font-size: var(--fs-sm);
+}
+.cycle-preview__item.is-skipped { opacity: 0.55; }
+.cycle-preview__date { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.cycle-preview__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-cell);
+  background: var(--cell-bg, var(--bg-muted));
+  color: var(--cell-fg, var(--text-primary));
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+.cycle-preview__shift { color: var(--text-primary); }
+.cycle-preview__action {
+  justify-self: end;
+  padding: 0 var(--sp-2);
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+/* 医生抽屉 footer 的「设轮班」靠左，与「取消 / 保存」分组 */
+.drawer__footer .shift-cycle-open-btn { margin-right: auto; }

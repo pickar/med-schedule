@@ -91,6 +91,21 @@ export function DoctorDrawer(): React.ReactElement {
     close();
   };
 
+  /** 「设轮班」：一条 ui/patch 同时关抽屉 + 开轮班弹窗 + 预选当前医生 */
+  const handleSetShiftCycle = (): void => {
+    if (editing) {
+      dispatch({
+        type: 'ui/patch',
+        payload: {
+          activeDrawer: 'none',
+          editingDoctorId: null,
+          shiftCycleOpen: true,
+          shiftCycleDoctorId: editing.id,
+        },
+      });
+    }
+  };
+
   return (
     <>
       <Drawer
@@ -114,6 +129,17 @@ export function DoctorDrawer(): React.ReactElement {
         }
         footer={
           <>
+            {editing ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon="repeat"
+                className="shift-cycle-open-btn"
+                onClick={handleSetShiftCycle}
+              >
+                {TEXTS.shiftCycleButton}
+              </Button>
+            ) : undefined}
             <Button variant="ghost" onClick={close}>
               {TEXTS.cancel}
             </Button>

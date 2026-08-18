@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>医键排班 · 使用说明</title>
+<style>
+  :root{
+    --primary:#00838F;        /* 临床青蓝主色 */
+    --primary-dark:#006C7C;
+    --primary-50:#E4EDF2;
+    --ink:#1F2D33;
+    --ink-2:#3A4B52;
+    --ink-3:#546E78;
+    --line:#D7E2E7;
+    --bg:#F4F8FA;
+    --card:#FFFFFF;
+    --ok:#2E9E5B;
+    --warn:#E08A1E;
+    --radius:16px;
+    --shadow:0 6px 24px rgba(9,38,46,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.7;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 72px;}
+  /* Hero */
+  .hero{
+    background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+    color:#fff;border-radius:0 0 28px 28px;padding:48px 28px 40px;text-align:center;
+  }
+  .hero .logo{width:84px;height:84px;margin:0 auto 16px;}
+  .hero h1{margin:0;font-size:34px;letter-spacing:1px;}
+  .hero .slogan{margin:10px 0 0;font-size:16px;opacity:.92;}
+  .hero .url{
+    display:inline-block;margin-top:18px;padding:8px 16px;border-radius:999px;
+    background:rgba(255,255,255,.16);font-size:14px;letter-spacing:.3px;
+  }
+  h2{font-size:24px;margin:48px 0 8px;display:flex;align-items:center;gap:10px;}
+  h2 .num{
+    display:inline-flex;width:30px;height:30px;border-radius:9px;background:var(--primary-50);
+    color:var(--primary-dark);align-items:center;justify-content:center;font-size:15px;font-weight:700;
+  }
+  .lead{color:var(--ink-3);margin:0 0 20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin:14px 0;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr;}}
+  /* Pain / Feature cards */
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+  .feat .ic{width:46px;height:46px;margin-bottom:10px;}
+  .feat h3{margin:0 0 6px;font-size:17px;}
+  .feat p{margin:0;color:var(--ink-3);font-size:14.5px;}
+  .pain{background:#FFF7ED;border-color:#F6D9B6;}
+  .pain h3{color:#9A5B12;}
+  .ok{color:var(--ok);font-weight:600;}
+  ul.clean{margin:8px 0;padding-left:0;list-style:none;}
+  ul.clean li{position:relative;padding-left:28px;margin:8px 0;color:var(--ink-2);}
+  ul.clean li svg{position:absolute;left:0;top:3px;width:18px;height:18px;}
+  /* Flow */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .step{flex:1;min-width:140px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+  .step .badge{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:8px;}
+  .step p{margin:0;font-size:14px;color:var(--ink-2);}
+  .arrow{display:flex;align-items:center;color:var(--primary);font-size:22px;padding:0 6px;}
+  @media(max-width:720px){.arrow{transform:rotate(90deg);}}
+  .figcap{font-size:13px;color:var(--ink-3);text-align:center;margin-top:8px;}
+  .callout{background:var(--primary-50);border-left:4px solid var(--primary);border-radius:0 12px 12px 0;padding:14px 18px;color:var(--ink-2);font-size:14.5px;margin:18px 0;}
+  footer{text-align:center;color:var(--ink-3);font-size:13px;margin-top:48px;}
+  footer a{color:var(--primary-dark);text-decoration:none;}
+  svg text{font-family:inherit;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <!-- 医疗十字 + 日历 品牌图标 -->
+  <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-label="医键排班图标">
+    <rect x="3" y="4.5" width="18" height="16" rx="2.5"/>
+    <path d="M3 9h18"/>
+    <path d="M8 2.5v3.2M16 2.5v3.2"/>
+    <path d="M12 12.2v4.6M9.7 14.5h4.6" stroke-width="2.1"/>
+  </svg>
+  <h1>医键排班</h1>
+  <p class="slogan">让排班变简单，早点下班</p>
+  <span class="url">🌐 https://pickar.github.io/med-schedule/</span>
+</header>
+
+<div class="wrap">
+
+  <!-- 1. 网站简介 -->
+  <h2><span class="num">1</span>网站简介</h2>
+  <p class="lead">一句话：一个打开就能用的医生排班工作台，无需注册登录，数据存在你自己的浏览器里。</p>
+  <div class="card">
+    <p style="margin:0;">
+      <strong>医键排班</strong> 是一款面向医院科室 / 诊所的<strong>可视化排班工具</strong>。它把「谁、哪天、上什么班」浓缩进一张清晰的时间表，
+      支持班次配色、医生管理、一键导出图片，并针对手机做了适配。整个网站是纯前端应用，
+      部署在 GitHub Pages 上，<strong>免费、开源、打开即用</strong>。
+    </p>
+    <div class="callout">
+      💡 它不收集任何个人信息——你的排班数据只保存在本地浏览器（localStorage），关掉网页也不会丢，换设备或清缓存才会清除。
+    </div>
+  </div>
+
+  <!-- 2. 解决的问题 -->
+  <h2><span class="num">2</span>它解决了什么</h2>
+  <p class="lead">排班这件事，最怕「看不清、改不动、通知不到」。</p>
+  <div class="grid2">
+    <div class="feat pain">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#E08A1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg>
+      <h3>Excel / 纸质表易错</h3><p>手工填表、复制粘贴，改一处要核好几遍，还容易串行漏格。</p>
+    </div>
+    <div class="feat pain">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#E08A1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+      <h3>临时换班混乱</h3><p>口头或群里说一声就改，事后谁也记不清原来的班是谁的。</p>
+    </div>
+    <div class="feat pain">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#E08A1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+      <h3>缺乏统一视图</h3><p>想知道「某人这周哪几天班」得翻半天，没有一目了然的全局表。</p>
+    </div>
+    <div class="feat pain">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#E08A1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      <h3>通知总漏人</h3><p>排好了却没及时同步到每个人，上班才发现排错了。</p>
+    </div>
+  </div>
+
+  <!-- 3. 功能介绍 -->
+  <h2><span class="num">3</span>功能介绍</h2>
+  <p class="lead">六大核心能力，覆盖从建表到分享的完整闭环。</p>
+  <div class="grid3">
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      <h3>可视化排班表</h3><p>横轴日期、纵轴医生，点格子即可落班次，整月一眼看清。</p>
+    </div>
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <h3>班次与配色</h3><p>11 种班次色标（白班 / 夜班 / 休 / 值班…），颜色区分直观不串。</p>
+    </div>
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 7l1.5 1.5L21 6"/></svg>
+      <h3>医生管理</h3><p>增删医生、分配固定颜色，谁是谁一目了然。</p>
+    </div>
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
+      <h3>一键导出 PNG</h3><p>把整张排班表导出成图片，发群、打印都方便。</p>
+    </div>
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>
+      <h3>本地自动保存</h3><p>每次改动自动存入浏览器，关掉再打开数据还在。</p>
+    </div>
+    <div class="feat">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#00838F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 18h6"/></svg>
+      <h3>移动端适配</h3><p>手机上用底部 Tab 切换「排班 / 医生 / 设置」，随时查班。</p>
+    </div>
+  </div>
+
+  <!-- 4. 使用流程 -->
+  <h2><span class="num">4</span>使用流程</h2>
+  <p class="lead">五步上手，从打开网站到把排班发出去。</p>
+
+  <div class="flow">
+    <div class="step"><span class="badge">1</span><p>打开网站<br/>访问 GitHub Pages 链接</p></div>
+    <div class="arrow">➜</div>
+    <div class="step"><span class="badge">2</span><p>添加医生<br/>录入姓名、分配颜色</p></div>
+    <div class="arrow">➜</div>
+    <div class="step"><span class="badge">3</span><p>排班次<br/>点格子选择班次</p></div>
+    <div class="arrow">➜</div>
+    <div class="step"><span class="badge">4</span><p>调整换班<br/>重选 / 拖拽修改</p></div>
+    <div class="arrow">➜</div>
+    <div class="step"><span class="badge">5</span><p>导出分享<br/>PNG 发群 / 打印</p></div>
+  </div>
+
+  <div class="card" style="margin-top:22px;">
+    <svg viewBox="0 0 720 300" width="100%" role="img" aria-label="排班表示意图">
+      <!-- 表头 -->
+      <rect x="0" y="0" width="720" height="300" rx="12" fill="#fff" stroke="#D7E2E7"/>
+      <text x="24" y="34" font-size="15" font-weight="700" fill="#006C7C">科室排班表 · 示意</text>
+      <!-- 列标题 -->
+      <g font-size="12" fill="#546E78" text-anchor="middle">
+        <text x="150" y="64">医生</text>
+        <text x="250" y="64">周一</text>
+        <text x="350" y="64">周二</text>
+        <text x="450" y="64">周三</text>
+        <text x="550" y="64">周四</text>
+        <text x="650" y="64">周五</text>
+      </g>
+      <line x1="20" y1="74" x2="700" y2="74" stroke="#D7E2E7"/>
+      <!-- 医生行 -->
+      <g font-size="13" fill="#1F2D33">
+        <text x="40" y="108">张医生</text>
+        <text x="40" y="158">李医生</text>
+        <text x="40" y="208">王医生</text>
+        <text x="40" y="258">赵医生</text>
+      </g>
+      <!-- 班次色块 -->
+      <g>
+        <!-- 白班 -->
+        <rect x="222" y="92" width="56" height="26" rx="6" fill="#4C9AFF"/>
+        <rect x="422" y="92" width="56" height="26" rx="6" fill="#4C9AFF"/>
+        <rect x="622" y="92" width="56" height="26" rx="6" fill="#4C9AFF"/>
+        <!-- 夜班 -->
+        <rect x="322" y="142" width="56" height="26" rx="6" fill="#7C5CFF"/>
+        <rect x="522" y="142" width="56" height="26" rx="6" fill="#7C5CFF"/>
+        <rect x="322" y="192" width="56" height="26" rx="6" fill="#7C5CFF"/>
+        <!-- 休息 -->
+        <rect x="222" y="192" width="56" height="26" rx="6" fill="#9CD0A8"/>
+        <rect x="422" y="242" width="56" height="26" rx="6" fill="#9CD0A8"/>
+        <!-- 值班 -->
+        <rect x="522" y="92" width="56" height="26" rx="6" fill="#FFB454"/>
+        <rect x="622" y="242" width="56" height="26" rx="6" fill="#FFB454"/>
+      </g>
+      <!-- 文字标注 -->
+      <g font-size="11" fill="#fff" text-anchor="middle">
+        <text x="250" y="109">白班</text><text x="450" y="109">白班</text><text x="650" y="109">白班</text>
+        <text x="350" y="159">夜班</text><text x="550" y="159">夜班</text><text x="350" y="209">夜班</text>
+        <text x="250" y="209">休</text><text x="450" y="259">休</text>
+        <text x="550" y="109">值班</text><text x="650" y="259">值班</text>
+      </g>
+    </svg>
+    <p class="figcap">图：排班表主界面示意——纵轴医生、横轴日期，彩色格子即班次</p>
+  </div>
+
+  <div class="card">
+    <svg viewBox="0 0 720 200" width="100%" role="img" aria-label="移动端底部Tab示意">
+      <rect x="270" y="10" width="180" height="180" rx="22" fill="#fff" stroke="#D7E2E7"/>
+      <rect x="270" y="10" width="180" height="180" rx="22" fill="none" stroke="#00838F" stroke-opacity=".15" stroke-width="3"/>
+      <!-- 顶部标题条 -->
+      <rect x="270" y="10" width="180" height="30" rx="22" fill="#00838F"/>
+      <rect x="270" y="28" width="180" height="12" fill="#00838F"/>
+      <text x="360" y="30" font-size="11" fill="#fff" text-anchor="middle">医键排班</text>
+      <!-- 内容区占位 -->
+      <rect x="288" y="54" width="144" height="14" rx="4" fill="#E4EDF2"/>
+      <rect x="288" y="76" width="144" height="14" rx="4" fill="#E4EDF2"/>
+      <rect x="288" y="98" width="100" height="14" rx="4" fill="#E4EDF2"/>
+      <!-- 底部 Tab -->
+      <rect x="270" y="154" width="180" height="36" fill="#F4F8FA"/>
+      <g font-size="9" text-anchor="middle">
+        <circle cx="318" cy="170" r="5" fill="#00838F"/><text x="318" y="186" fill="#00838F">排班</text>
+        <circle cx="360" cy="170" r="5" fill="#9DB4BC"/><text x="360" y="186" fill="#546E78">医生</text>
+        <circle cx="402" cy="170" r="5" fill="#9DB4BC"/><text x="402" y="186" fill="#546E78">设置</text>
+      </g>
+    </svg>
+    <p class="figcap">图：手机端底部 Tab 切换「排班 / 医生 / 设置」，单手即可操作</p>
+  </div>
+
+  <!-- 5. 优势点 -->
+  <h2><span class="num">5</span>为什么选它</h2>
+  <div class="card">
+    <ul class="clean">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>零门槛</strong>：纯前端，无需登录注册，打开链接就能用。</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>隐私可控</strong>：数据只存本地浏览器，不经过任何服务器。</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>医疗审美</strong>：临床青蓝配色，清爽、专业、不刺眼。</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>移动友好</strong>：手机随时查班、改班，不在电脑前也行。</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>免费开源</strong>：托管于 GitHub Pages，无费用、代码透明可自查。</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="#2E9E5B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>误改可退</strong>：支持撤销 / 重做，排错了一键回到上一步。</span></li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    🚀 <strong>开始使用：</strong>打开 <a href="https://pickar.github.io/med-schedule/" style="color:#006C7C;">https://pickar.github.io/med-schedule/</a>，
+    先到「医生」里加好团队成员，再回到「排班」逐格点选班次即可。建议第一次排好后点「导出 PNG」存档一份。
+  </div>
+
+  <footer>
+    医键排班 · 让排班变简单，早点下班<br/>
+    部署于 GitHub Pages · 数据本地保存，不上传服务器
+  </footer>
+
+</div>
+</body>
+</html>
