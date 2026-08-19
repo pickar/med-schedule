@@ -1,32 +1,143 @@
-# React + TypeScript + Vite
+# 医键排班
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> 让排班变简单，早点下班
 
-Currently, two official plugins are available:
+**医键排班**是一款面向医院科室 / 诊所的**可视化医生排班工具**。打开网页即用，无需注册登录，数据保存在你自己的浏览器里。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+在线使用：**https://pickar.github.io/med-schedule/**
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 网站简介
 
-## Expanding the Oxlint configuration
+医键排班把「谁、哪天、上什么班」浓缩进一张清晰的时间表，支持班次配色、医生管理、一键导出图片，并针对手机做了适配。整个网站是纯前端应用，部署在 GitHub Pages 上，**免费、开源、打开即用**。
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+它不收集任何个人信息——你的排班数据只保存在本地浏览器（localStorage），关掉网页也不会丢，换设备或清缓存才会清除。
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## 它解决了什么
+
+排班这件事，最怕「看不清、改不动、通知不到」。
+
+| 痛点 | 说明 |
+| --- | --- |
+| Excel / 纸质表易错 | 手工填表、复制粘贴，改一处要核好几遍，还容易串行漏格。 |
+| 临时换班混乱 | 口头或群里说一声就改，事后谁也记不清原来的班是谁的。 |
+| 缺乏统一视图 | 想知道「某人这周哪几天班」得翻半天，没有一目了然的全局表。 |
+| 通知总漏人 | 排好了却没及时同步到每个人，上班才发现排错了。 |
+
+---
+
+## 功能介绍
+
+| 功能 | 说明 |
+| --- | --- |
+| 可视化排班表 | 横轴日期、纵轴医生，点格子即可落班次，整月一眼看清。 |
+| 班次与配色 | 11 种班次色标（白班 / 夜班 / 休息 / 值班…），颜色区分直观不串。 |
+| 医生管理 | 增删医生、分配固定颜色，谁是谁一目了然。 |
+| 一键导出 PNG | 把整张排班表导出成图片，发群、打印都方便。 |
+| 本地自动保存 | 每次改动自动存入浏览器，关掉再打开数据还在。 |
+| 移动端适配 | 手机上用底部 Tab 切换「排班 / 医生 / 设置」，随时查班。 |
+| 轮班（班次序列循环） | v1.1.0 新增：为某位医生设定班次序列，按周期自动铺满一段日期。详见下文。 |
+
+---
+
+## 使用流程
+
+五步上手，从打开网站到把排班发出去：
+
+1. **打开网站** — 访问 GitHub Pages 链接（无需登录）。
+2. **添加医生** — 在「医生」里录入姓名、分配颜色。
+3. **排班次** — 回到「排班」，逐格点选班次。
+4. **调整换班** — 重选或清空格子修改；支持撤销 / 重做。
+5. **导出分享** — 点「导出 PNG」存图，发群或打印。
+
+> 建议第一次排好后点「导出 PNG」存档一份，方便留底和对账。
+
+---
+
+## 轮班功能（v1.1.0 新增）
+
+有医生提出「能不能一键按规律轮班」，于是新增了**班次序列循环（按医生）**能力。
+
+### 它能做什么
+
+为某一位医生定义一段**班次序列**（例如 `白班 → 夜班 → 休息`），再选择一段连续日期区间，系统会按序列周期自动把班次铺进该医生对应日期的格子里。
+
+示例：序列 `[白班, 夜班, 休息]`，起 `8/1`、止 `8/31`，则 `8/1=白`、`8/2=夜`、`8/3=休`、`8/4=白`…… 以此循环。
+
+### 怎么用
+
+1. 点顶部工具栏的 **「轮班」** 按钮（在「导出 PNG」旁边）。
+2. 选择医生，在「班次序列」里添加班次（如 白班 / 夜班 / 休息），可上下移动调整顺序。
+3. 选择起始、结束日期。
+4. 下方**实时预览**每天会排什么班，并标注冲突数量。
+5. 点「应用轮班」写入；写错按一次 `Ctrl+Z` 整段回退。
+
+> 手机端：底部切到排班页 → 右上角菜单里也有「轮班」；在医生抽屉里点某人也能「设轮班」并自动预选。
+
+### 关键特性
+
+- **日历锚定**：请假日、被锁定的格子会被跳过，但**仍消耗序列位**，循环节奏不会被打乱（例如 8/3 是请假，则 8/3 跳过、8/4 仍是白班）。
+- **冲突处理**：默认跳过已有非锁定班次（不误覆盖），并提供「覆盖」开关按需开启。
+- **整段单次撤销**：轮班写入在撤销栈中是**一条**记录，一次回退即可还原整段。
+- **零破坏**：领域模型零变更、不碰持久化结构，老数据无缝兼容。
+
+---
+
+## 为什么选它
+
+- **零门槛** — 纯前端，无需登录注册，打开链接就能用。
+- **隐私可控** — 数据只存本地浏览器，不经过任何服务器。
+- **医疗审美** — 临床青蓝配色，清爽、专业、不刺眼。
+- **移动友好** — 手机随时查班、改班，不在电脑前也行。
+- **免费开源** — 托管于 GitHub Pages，无费用、代码透明可自查。
+- **误改可退** — 支持撤销 / 重做，排错了一键回到上一步。
+
+---
+
+## 技术栈
+
+- React 19 + Vite 7 + TypeScript
+- 纯前端，零运行时第三方依赖（除 React 本身）
+- 数据持久化：浏览器 localStorage
+- 部署：GitHub Pages（GitHub Actions 自动构建）
+
+---
+
+## 本地运行
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器（默认 http://localhost:5173）
+npm run dev
+
+# 类型检查
+npm run typecheck      # 等价 tsc -b
+
+# 生产构建
+npm run build          # 输出到 dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 部署
+
+仓库已配置 GitHub Actions 工作流（`.github/workflows/deploy.yml`）。向 `main` 分支推送即自动执行：拉取代码 → `npm ci` → `npm run build` → 上传 `dist` → 部署到 GitHub Pages。
+
+首次使用需在仓库 **Settings → Pages** 中将 Source 设为 **GitHub Actions**。
+
+---
+
+## 图文版使用说明
+
+仓库内含一份图文并茂的使用说明 [`guide.html`](./guide.html)，用浏览器打开即可查看（含界面示意图与手机端示意）。
+
+---
+
+## 许可证
+
+本项目以开源方式提供，欢迎自用、二次开发与反馈。
