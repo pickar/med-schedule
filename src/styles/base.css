@@ -26,6 +26,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* 应用自管滚动：禁止整页回弹 / 下拉刷新，移动端才像原生 App */
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  /* iOS 地址栏收起后仍占位的兜底，移动端会在 mobile.css 用 100dvh 覆盖 */
+  position: fixed;
+  inset: 0;
 }
 
 h1,

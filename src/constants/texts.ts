@@ -324,6 +324,18 @@ export const TEXTS = {
   shiftCycleMoveUp: '上移',
   shiftCycleMoveDown: '下移',
   shiftCycleRemove: '移除',
+
+  // ===== 移动端「医生视角」排班（≤768px 专属）=====
+  mdsvPrevDoctor: '上一位',
+  mdsvNextDoctor: '下一位',
+  mdsvWorkCount: (n: number): string => `出勤 ${n} 天`,
+  mdsvRestCount: (n: number): string => `休息 ${n} 天`,
+
+  // ===== 移动端「日历主视图」尝试（≤768px 专属）=====
+  calViewCalendar: '月历',
+  calViewDoctor: '医生',
+  calDayMore: (n: number): string => `+${n}`,
+  calSheetTitle: (m: number, d: number): string => `${m}月${d}日 · 全天排班`,
 } as const;
 
 /** 星期文案，索引 0-6 对应周日到周六（与 Date.getDay() 及 fixedClinicDays 一致） */

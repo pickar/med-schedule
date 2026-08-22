@@ -36,6 +36,7 @@ export function createInitialUIState(): UIState {
     doctorPanelCollapsed: false,
     insightPanelCollapsed: false,
     mobileTab: 'schedule',
+    mobileDoctorId: null,
     activeDrawer: 'none',
     editingDoctorId: null,
     doctorSearch: '',

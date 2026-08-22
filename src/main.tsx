@@ -18,3 +18,14 @@ createRoot(container).render(
     </ErrorBoundary>
   </StrictMode>,
 );
+
+// 注册 Service Worker：仅生产构建启用。
+// 目的：让安卓 Chrome 满足「可安装到主屏」的必要条件（需带 fetch 处理）。
+// 本地 dev 不注册，避免缓存干扰 HMR。
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      /* 注册失败不影响正常使用，仅丧失离线/安装能力 */
+    });
+  });
+}

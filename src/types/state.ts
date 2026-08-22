@@ -48,6 +48,12 @@ export interface UIState {
    * 它描述的是「此刻在小屏上看哪一块」，撤销它或跨会话恢复它都没有意义。
    */
   mobileTab: MobileTab;
+  /**
+   * 移动端「医生视角」当前选中的医生 id（≤768px 专属）。
+   * 与 `mobileTab` 同机制：刻意不进 `DataSnapshot`（不入撤销栈）也不落 localStorage——
+   * 它描述的是「此刻在小屏上正在看哪位医生的排班」，撤销或跨会话恢复它都没有意义。
+   */
+  mobileDoctorId: string | null;
   activeDrawer: ActiveDrawer;
   /** null 表示新增医生 */
   editingDoctorId: string | null;

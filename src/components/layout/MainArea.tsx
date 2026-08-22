@@ -27,6 +27,8 @@ import { formatMonthLabel, listMonthDates, todayDateKey } from '../../lib/date';
 import { ScheduleTable } from '../ScheduleTable/ScheduleTable';
 import { useDoctorRows, useWeekendFlags } from '../ScheduleTable/rowData';
 import type { TabPanelA11y } from './BottomTabBar';
+import { useIsMobile } from './useIsMobile';
+import { MobileScheduleView } from '../ScheduleTable/MobileScheduleView';
 
 /*
  * 派生数据落后于当前月份时用的占位常量。
@@ -53,6 +55,7 @@ export function MainArea({ a11y }: MainAreaProps): React.ReactElement {
   const month = state.ui.currentMonth;
   // derived 走 useDeferredValue，切月瞬间可能还停在上个月，这里如实标出而不是显示错值
   const stale = derived.month !== month;
+  const isMobile = useIsMobile();
 
   const dates = useMemo(() => listMonthDates(month), [month]);
   const weekendFlags = useWeekendFlags(dates);
@@ -93,7 +96,11 @@ export function MainArea({ a11y }: MainAreaProps): React.ReactElement {
       {/* 打印专用标题：屏幕态隐藏（print.css），打印态显示在表格上方 */}
       <div className="print-schedule-title">{scheduleTitle(state.rules.departmentName, month)}</div>
 
-      <div className="app-main__toolbar no-print">
+      {isMobile ? (
+        <MobileScheduleView />
+      ) : (
+        <>
+          <div className="app-main__toolbar no-print">
         <h1 className="app-main__title">{formatMonthLabel(month)}排班表</h1>
         <span className="badge badge--muted" aria-live="polite">
           {stale
@@ -123,6 +130,8 @@ export function MainArea({ a11y }: MainAreaProps): React.ReactElement {
           onToggleLegend={handleToggleLegend}
         />
       </div>
+        </>
+      )}
     </main>
   );
 }
