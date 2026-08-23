@@ -10,7 +10,7 @@ import type { Doctor, DoctorTitle, Rules, WeekdayShiftConfig } from '../types/do
 import { DOCTOR_COLORS } from './palette';
 
 /** 数据结构版本号，任何破坏性字段变更都必须 +1 并补 MIGRATIONS */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** localStorage key 命名空间 */
 export const STORAGE_NAMESPACE = 'warmshift:v1';
@@ -20,6 +20,8 @@ export const STORAGE_KEYS = {
   rules: `${STORAGE_NAMESPACE}:rules`,
   /** 排班按 'YYYY-MM' 分月存，实际 key 为 `${schedules}:${month}` */
   schedules: `${STORAGE_NAMESPACE}:schedules`,
+  /** 自定义班次定义，独立存储（与 doctors/rules 同构） */
+  shifts: `${STORAGE_NAMESPACE}:shifts`,
   meta: `${STORAGE_NAMESPACE}:meta`,
   /** 解析失败时的原始数据备份，绝不覆盖用户数据 */
   backup: `${STORAGE_NAMESPACE}:backup`,

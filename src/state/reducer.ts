@@ -20,6 +20,7 @@ import { emptyHistory, pushHistory, redo, snapshotOf, undo } from './history';
 import * as doctors from './handlers/doctorHandlers';
 import * as rules from './handlers/rulesHandlers';
 import * as schedule from './handlers/scheduleHandlers';
+import * as shiftDef from './handlers/shiftHandlers';
 
 /** 参与撤销的数据类 action */
 type DataAction = Extract<
@@ -27,6 +28,7 @@ type DataAction = Extract<
   | { type: `doctor/${string}` }
   | { type: `rules/${string}` }
   | { type: `schedule/${string}` }
+  | { type: `shiftDef/${string}` }
   | { type: 'app/clearAll' }
 >;
 
@@ -60,6 +62,7 @@ export function createInitialState(): AppState {
     doctors: [],
     rules: createDefaultRules(),
     schedules: {},
+    customShifts: [],
     ui: createInitialUIState(),
     history: emptyHistory(),
   };
@@ -162,6 +165,12 @@ function mutate(state: AppState, action: DataAction): AppState {
       return schedule.clearMonth(state, action.payload.month);
     case 'schedule/applyShiftCycle':
       return schedule.applyShiftCycle(state, action.payload);
+    case 'shiftDef/add':
+      return shiftDef.addCustomShift(state, action.payload);
+    case 'shiftDef/update':
+      return shiftDef.updateCustomShift(state, action.payload);
+    case 'shiftDef/remove':
+      return shiftDef.removeCustomShift(state, action.payload.id, action.payload.clearUsages);
     case 'app/clearAll':
       return clearAllData(state);
     default:
@@ -171,10 +180,14 @@ function mutate(state: AppState, action: DataAction): AppState {
 
 /** 清空全部数据但保留 UI 状态（当前月份、面板折叠态不该被重置） */
 function clearAllData(state: AppState): AppState {
-  if (state.doctors.length === 0 && Object.keys(state.schedules).length === 0) {
+  if (
+    state.doctors.length === 0 &&
+    Object.keys(state.schedules).length === 0 &&
+    state.customShifts.length === 0
+  ) {
     return state;
   }
-  return { ...state, doctors: [], schedules: {}, rules: createDefaultRules() };
+  return { ...state, doctors: [], schedules: {}, rules: createDefaultRules(), customShifts: [] };
 }
 
 // ============ 历史文案 ============
@@ -220,6 +233,12 @@ function labelOf(state: AppState, action: DataAction): string {
       return `清空${formatMonthLabel(action.payload.month)}排班`;
     case 'schedule/applyShiftCycle':
       return `轮班：${nameOf(state, action.payload.doctorId)} ${formatMD(action.payload.startDate)}–${formatMD(action.payload.endDate)}`;
+    case 'shiftDef/add':
+      return `新增班次「${action.payload.label || '未命名'}」`;
+    case 'shiftDef/update':
+      return `编辑班次「${action.payload.label}」`;
+    case 'shiftDef/remove':
+      return `删除班次「${action.payload.id}」`;
     case 'app/clearAll':
       return '清空全部数据';
     default:
@@ -277,6 +296,7 @@ function timeTravel(state: AppState, direction: 'undo' | 'redo'): AppState {
     doctors: result.snapshot.doctors,
     rules: result.snapshot.rules,
     schedules: result.snapshot.schedules,
+    customShifts: result.snapshot.customShifts,
     history: result.history,
     // 时间旅行后原高亮的单元格可能已不存在，一并清掉避免指向空格
     ui: { ...state.ui, highlightCell: null, highlightDoctorId: null },
@@ -291,6 +311,7 @@ function hydrate(state: AppState, snapshot: DataSnapshot): AppState {
     doctors: snapshot.doctors,
     rules: rules.enforceRulesInvariants(snapshot.rules),
     schedules: snapshot.schedules,
+    customShifts: snapshot.customShifts,
     history: emptyHistory(),
   };
 }

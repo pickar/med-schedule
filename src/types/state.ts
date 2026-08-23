@@ -13,14 +13,15 @@ import type {
   Rules,
   ScheduleEntry,
   SchedulesByMonth,
-  ShiftType,
+  ShiftDefinition,
+  ShiftId,
 } from './domain';
 
 /** 自动保存状态机 */
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 /** 抽屉互斥，同一时刻至多打开一个 */
-export type ActiveDrawer = 'none' | 'rules' | 'doctor' | 'leave';
+export type ActiveDrawer = 'none' | 'rules' | 'doctor' | 'leave' | 'shiftManager';
 
 /** 定位高亮的单元格坐标 */
 export interface CellRef {
@@ -87,6 +88,8 @@ export interface DataSnapshot {
   doctors: Doctor[];
   rules: Rules;
   schedules: SchedulesByMonth;
+  /** 自定义班次定义（T01 新增，参与撤销栈 + 持久化） */
+  customShifts: ShiftDefinition[];
 }
 
 export interface HistoryEntry {
@@ -106,6 +109,8 @@ export interface AppState {
   doctors: Doctor[];
   rules: Rules;
   schedules: SchedulesByMonth;
+  /** 自定义班次定义（T01 新增，与 doctors/rules/schedules 同生命周期） */
+  customShifts: ShiftDefinition[];
   ui: UIState;
   history: HistoryState;
 }
@@ -137,7 +142,7 @@ export type Action =
   // --- 排班 ---
   | {
       type: 'schedule/setCell';
-      payload: { date: string; doctorId: string; shiftType: ShiftType | null; manual?: boolean };
+      payload: { date: string; doctorId: string; shiftType: ShiftId | null; manual?: boolean };
     }
   | { type: 'schedule/toggleLock'; payload: { date: string; doctorId: string } }
   | { type: 'schedule/unlockAll'; payload: { month: string } }
@@ -150,12 +155,16 @@ export type Action =
       type: 'schedule/applyShiftCycle';
       payload: {
         doctorId: string;
-        sequence: ShiftType[];
+        sequence: ShiftId[];
         startDate: string;
         endDate: string;
         overwrite: boolean;
       };
     }
+  // --- 自定义班次 ---
+  | { type: 'shiftDef/add'; payload: ShiftDefinition }
+  | { type: 'shiftDef/update'; payload: ShiftDefinition }
+  | { type: 'shiftDef/remove'; payload: { id: string; clearUsages: boolean } }
   // --- 历史 ---
   | { type: 'history/undo' }
   | { type: 'history/redo' }

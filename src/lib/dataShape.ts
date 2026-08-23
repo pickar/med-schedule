@@ -21,6 +21,7 @@ import type {
   DoctorTitle,
   MonthSchedule,
   Rules,
+  ShiftDefinition,
   ShiftRange,
   WeekdayShiftConfig,
 } from '../types/domain';
@@ -174,4 +175,36 @@ export function doctorIdSet(doctors: readonly Doctor[]): Set<string> {
     }
   }
   return ids;
+}
+
+/**
+ * 保证 `customShifts` 形状可信：非数组返回 []，逐条补全缺省字段。
+ * 对应 QA-BUG-01 同类崩溃路径：一份旧版本 localStorage / 一次手工编辑备份，
+ * 都能让一个签名为 `ShiftDefinition` 的值实际缺 `bg`/`fg`，流进渲染期 `shiftCellStyle`
+ * 直接 TypeError（整页白屏）。
+ */
+export function ensureCustomShiftsShape(raw: ShiftDefinition[] | null | undefined): ShiftDefinition[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const result: ShiftDefinition[] = [];
+  for (const item of raw) {
+    if (!isObject(item) || typeof item.id !== 'string') {
+      continue;
+    }
+    const source: Record<string, unknown> = item;
+    result.push({
+      id: item.id,
+      label: typeof source.label === 'string' && source.label.trim() !== '' ? source.label : item.id,
+      short: typeof source.short === 'string' && source.short.trim() !== '' ? source.short : item.id.slice(0, 1),
+      bg: typeof source.bg === 'string' ? source.bg : '#EFEBE9',
+      fg: typeof source.fg === 'string' ? source.fg : '#4E342E',
+      isWork: source.isWork !== false,
+      autoAssignable: source.autoAssignable === true,
+      isBuiltin: source.isBuiltin === true,
+      startTime: typeof source.startTime === 'string' ? source.startTime : undefined,
+      endTime: typeof source.endTime === 'string' ? source.endTime : undefined,
+    });
+  }
+  return result;
 }

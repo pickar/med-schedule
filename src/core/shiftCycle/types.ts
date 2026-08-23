@@ -5,17 +5,17 @@
  * 纯函数 `planShiftCycle` / `collectWrites` 另见 `plan.ts`。
  */
 
-import type { LeaveRange, SchedulesByMonth, ShiftType } from '../../types/domain';
+import type { LeaveRange, SchedulesByMonth, ShiftId } from '../../types/domain';
 
 /** 班次序列：可重复、顺序即轮转顺序（日历日按 i % L 消费序列位） */
-export type ShiftSequence = readonly ShiftType[];
+export type ShiftSequence = readonly ShiftId[];
 
 /** 轮班弹窗的草稿状态（托管在容器组件的 useState 中） */
 export interface ShiftCycleDraft {
   /** 目标医生 id；null 表示尚未选择 */
   doctorId: string | null;
-  /** 班次序列，如 [白班, 夜班, 休息] */
-  sequence: ShiftType[];
+  /** 班次序列，如 [白班, 夜班, 休息]，可含自定义班次 id */
+  sequence: ShiftId[];
   /** 开始日期 'YYYY-MM-DD'，'' 表示未选 */
   startDate: string;
   /** 结束日期 'YYYY-MM-DD'，'' 表示未选 */
@@ -41,12 +41,12 @@ export type DayAction = 'write' | 'overwrite' | 'skipLocked' | 'skipLeave' | 'sk
 export interface DayOutcome {
   /** 'YYYY-MM-DD' */
   date: string;
-  shiftType: ShiftType;
+  shiftType: ShiftId;
   /** 该日在序列中的下标（i % L），用于预览回溯 */
   seqIndex: number;
   action: DayAction;
   /** 原班次（仅当该日已有排班时存在） */
-  previous?: ShiftType;
+  previous?: ShiftId;
 }
 
 export type ShiftCycleError =

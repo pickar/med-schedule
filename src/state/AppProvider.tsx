@@ -191,7 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }): React.ReactE
       }
       runSaveRef.current();
     },
-    [hydrated, state.doctors, state.rules, state.schedules],
+    [hydrated, state.doctors, state.rules, state.schedules, state.customShifts],
     SAVE_DEBOUNCE_MS,
   );
 
@@ -223,10 +223,11 @@ export function AppProvider({ children }: { children: ReactNode }): React.ReactE
   const monthSchedule = deferredState.schedules[month] ?? EMPTY_MONTH_SCHEDULE;
   const doctors = deferredState.doctors;
   const rules = deferredState.rules;
+  const customShifts = deferredState.customShifts;
 
   const derived = useMemo(
-    () => computeDerived({ month, schedule: monthSchedule, doctors, rules }),
-    [month, monthSchedule, doctors, rules],
+    () => computeDerived({ month, schedule: monthSchedule, doctors, rules, customShifts }),
+    [month, monthSchedule, doctors, rules, customShifts],
   );
 
   return (

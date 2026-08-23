@@ -21,18 +21,24 @@ export function emptyHistory(): HistoryState {
   return { past: [], future: [] };
 }
 
-/** 从完整 state 中摘出参与撤销的三个数据字段（不含 UI 与历史本身） */
+/** 从完整 state 中摘出参与撤销的四个数据字段（不含 UI 与历史本身） */
 export function snapshotOf(state: AppState): DataSnapshot {
   return {
     doctors: state.doctors,
     rules: state.rules,
     schedules: state.schedules,
+    customShifts: state.customShifts,
   };
 }
 
 /** 快照是否与当前状态等价（引用比较即可，reducer 保证不可变） */
 export function isSameSnapshot(a: DataSnapshot, b: DataSnapshot): boolean {
-  return a.doctors === b.doctors && a.rules === b.rules && a.schedules === b.schedules;
+  return (
+    a.doctors === b.doctors &&
+    a.rules === b.rules &&
+    a.schedules === b.schedules &&
+    a.customShifts === b.customShifts
+  );
 }
 
 /**

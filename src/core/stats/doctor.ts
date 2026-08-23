@@ -7,8 +7,8 @@
  *    若不计入，长假医生会被误报「休息天数不足」，那是彻头彻尾的噪音。
  */
 
-import type { Doctor, MonthSchedule, Rules, ShiftType } from '../../types/domain';
-import { isClinicShift } from '../../constants/shifts';
+import type { Doctor, MonthSchedule, Rules, ShiftDefinition, ShiftType } from '../../types/domain';
+import { isClinicShift, isRestShiftId } from '../../constants/shifts';
 import { listMonthDates } from '../../lib/date';
 import { buildLeaveMap } from '../validator/rules';
 import { burden } from '../generator/workload';
@@ -72,11 +72,13 @@ export interface DoctorStatsParams {
   schedule: MonthSchedule;
   doctors: Doctor[];
   rules: Rules;
+  /** 自定义班次定义（custom-aware 统计用） */
+  customShifts: ShiftDefinition[];
 }
 
 /** 按名册顺序输出每位医生的当月统计 */
 export function computeDoctorStats(params: DoctorStatsParams): DoctorStat[] {
-  const { month, schedule, doctors, rules } = params;
+  const { month, schedule, doctors, rules, customShifts } = params;
   const dates = listMonthDates(month);
   const totalDays = dates.length;
   const leaveMap = buildLeaveMap(doctors, month);
@@ -84,9 +86,12 @@ export function computeDoctorStats(params: DoctorStatsParams): DoctorStat[] {
   // 一次遍历排班，把计数落到每位医生名下，避免「医生 × 天数」二次嵌套
   const countsByDoctor = new Map<string, Record<ShiftType, number>>();
   const rotationByDoctor = new Map<string, number>();
+  // 自定义「休息类」班次（isWork=false）的计数：用于补进 actualRest，可抵休息天数
+  const customRestByDoctor = new Map<string, number>();
   for (const doctor of doctors) {
     countsByDoctor.set(doctor.id, createEmptyCounts());
     rotationByDoctor.set(doctor.id, 0);
+    customRestByDoctor.set(doctor.id, 0);
   }
   for (const date of dates) {
     const day = schedule?.[date];
@@ -95,17 +100,25 @@ export function computeDoctorStats(params: DoctorStatsParams): DoctorStat[] {
     }
     for (const entry of Object.values(day)) {
       // BUG-01 防御：畸形数据里的 null / 非对象条目直接跳过，绝不让单格脏数据掀翻整张表
-      if (!entry) {
+      if (!entry || typeof entry.shiftType !== 'string') {
         continue;
       }
       const counts = countsByDoctor.get(entry.doctorId);
       // 已删除医生的残留排班：跳过而不是补建，统计口径以名册为准
-      if (!counts || !(entry.shiftType in counts)) {
+      if (!counts) {
         continue;
       }
-      counts[entry.shiftType] += 1;
-      if (entry.isRotation && isClinicShift(entry.shiftType)) {
-        rotationByDoctor.set(entry.doctorId, (rotationByDoctor.get(entry.doctorId) ?? 0) + 1);
+      if (entry.shiftType in counts) {
+        counts[entry.shiftType as ShiftType] += 1;
+        if (entry.isRotation && isClinicShift(entry.shiftType)) {
+          rotationByDoctor.set(entry.doctorId, (rotationByDoctor.get(entry.doctorId) ?? 0) + 1);
+        }
+      } else if (isRestShiftId(entry.shiftType, customShifts)) {
+        // 自定义休息班次：不设单列统计行，只计入 actualRest
+        customRestByDoctor.set(
+          entry.doctorId,
+          (customRestByDoctor.get(entry.doctorId) ?? 0) + 1,
+        );
       }
     }
   }
@@ -119,6 +132,7 @@ export function computeDoctorStats(params: DoctorStatsParams): DoctorStat[] {
       rules,
       totalDays,
       countLeaveDays(leaveMap, doctor.id),
+      customRestByDoctor.get(doctor.id) ?? 0,
     );
   });
 }
@@ -131,6 +145,7 @@ function buildDoctorStat(
   rules: Rules,
   totalDays: number,
   leaveDays: number,
+  customRestCount: number,
 ): DoctorStat {
   const clinicCount = counts.clinic + counts.expertClinic;
   const dayShiftCount = counts.dayShift;
@@ -140,7 +155,8 @@ function buildDoctorStat(
   const otherWorkCount =
     counts.emergency + counts.continuousShift + counts.deputyShift + counts.chiefDuty;
   const workCount = clinicCount + dayCount + nightCount + otherWorkCount;
-  const actualRest = counts.rest;
+  // actualRest 含内置 `rest` 与自定义休息班次（可抵休息天数）；不含 night下休
+  const actualRest = counts.rest + customRestCount;
   const postNightCount = counts.postNightRest;
   const shouldRest = rules?.restDaysPerMonth ?? 0;
 

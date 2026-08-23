@@ -8,11 +8,10 @@
  * 3. UI 常用的两套索引与两个衍生列表一并算好，面板层不再各自遍历。
  */
 
-import type { Doctor, MonthSchedule, Rules } from '../../types/domain';
+import type { Doctor, MonthSchedule, Rules, ShiftDefinition } from '../../types/domain';
 import type { ValidationResult } from '../../types/validation';
 import { emptyValidationResult } from '../../types/validation';
-import { isShiftType } from '../../constants/shifts';
-import { ensureDoctorsShape, ensureRulesShape } from '../../lib/dataShape';
+import { ensureCustomShiftsShape, ensureDoctorsShape, ensureRulesShape } from '../../lib/dataShape';
 import { validateMonth } from '../validator';
 import type { DailyStat } from './daily';
 import { computeDailyStats, countOutOfRangeDays, indexDailyStats } from './daily';
@@ -44,6 +43,8 @@ export interface DerivedParams {
   schedule: MonthSchedule;
   doctors: Doctor[];
   rules: Rules;
+  /** 自定义班次定义（custom-aware 统计 / 校验用） */
+  customShifts: ShiftDefinition[];
 }
 
 /**
@@ -55,11 +56,11 @@ export interface DerivedParams {
  * 局部缺失，不能造成全局崩溃**。
  */
 export function computeDerived(params: DerivedParams): DerivedData {
-  const { month, schedule, doctors, rules } = sanitizeParams(params);
+  const { month, schedule, doctors, rules, customShifts } = sanitizeParams(params);
 
   const validation = validateMonth({ month, schedule, doctors, rules });
-  const dailyStats = computeDailyStats({ month, schedule, rules });
-  const doctorStats = computeDoctorStats({ month, schedule, doctors, rules });
+  const dailyStats = computeDailyStats({ month, schedule, rules, customShifts });
+  const doctorStats = computeDoctorStats({ month, schedule, doctors, rules, customShifts });
 
   return {
     month,
@@ -90,6 +91,7 @@ function sanitizeParams(params: DerivedParams): DerivedParams {
     schedule: sanitizeSchedule(params.schedule),
     doctors: ensureDoctorsShape(params.doctors),
     rules: ensureRulesShape(params.rules),
+    customShifts: ensureCustomShiftsShape(params.customShifts),
   };
 }
 
@@ -110,7 +112,9 @@ function sanitizeSchedule(raw: MonthSchedule | null | undefined): MonthSchedule 
     }
     const kept: MonthSchedule[string] = {};
     for (const [doctorId, entry] of Object.entries(day)) {
-      if (!entry || typeof entry !== 'object' || !isShiftType(entry.shiftType)) {
+      // ⚠️ 关键回归点：放宽 isShiftType 判定为 typeof === 'string'，
+      // 否则自定义班次 id（非 ShiftType 字面量）会被清洗丢弃。
+      if (!entry || typeof entry !== 'object' || typeof entry.shiftType !== 'string') {
         continue;
       }
       kept[doctorId] = entry.doctorId === doctorId ? entry : { ...entry, doctorId };

@@ -5,8 +5,8 @@
  * 因此这里必须一次算全，让展开/收起纯粹是显示切换，不触发重算。
  */
 
-import type { MonthSchedule, Rules, ShiftType } from '../../types/domain';
-import { RANGED_SHIFTS, SHIFT_ORDER } from '../../constants/shifts';
+import type { MonthSchedule, Rules, ShiftDefinition, ShiftType } from '../../types/domain';
+import { RANGED_SHIFTS, SHIFT_ORDER, isRestShiftId, isWorkShiftId } from '../../constants/shifts';
 import { getWeekday, listMonthDates } from '../../lib/date';
 
 /** 人数区间的越界状态；`none` 表示该班次未配置区间 */
@@ -43,6 +43,8 @@ export interface DailyStatsParams {
   month: string;
   schedule: MonthSchedule;
   rules: Rules;
+  /** 自定义班次定义（custom-aware 统计用） */
+  customShifts: ShiftDefinition[];
 }
 
 /** 全 0 的班次计数表，key 恒为 11 种 */
@@ -56,7 +58,7 @@ export function createEmptyCounts(): Record<ShiftType, number> {
 
 /** 逐日统计当月排班，返回值与 `listMonthDates()` 同序等长 */
 export function computeDailyStats(params: DailyStatsParams): DailyStat[] {
-  const { month, schedule, rules } = params;
+  const { month, schedule, rules, customShifts } = params;
 
   return listMonthDates(month).map((date) => {
     const weekday = getWeekday(date);
@@ -68,16 +70,19 @@ export function computeDailyStats(params: DailyStatsParams): DailyStat[] {
     const day = schedule?.[date];
     if (day) {
       for (const entry of Object.values(day)) {
-        // 防御空条目与未知 shiftType（可能来自被手工改写的 localStorage / 导入的备份）：
+        // 防御空条目与非法 shiftType（可能来自被手工改写的 localStorage / 导入的备份）：
         // 不计入，避免污染统计。单条脏数据只影响它自己，不影响整月统计。
-        if (!entry || !(entry.shiftType in counts)) {
+        if (!entry || typeof entry.shiftType !== 'string') {
           continue;
         }
-        counts[entry.shiftType] += 1;
+        // 内置班次进 11-key counts；自定义班次（不在 11-key 中）只计 work/rest 合计。
+        if (entry.shiftType in counts) {
+          counts[entry.shiftType as ShiftType] += 1;
+        }
         assignedTotal += 1;
-        if (entry.shiftType === 'rest' || entry.shiftType === 'postNightRest') {
+        if (isRestShiftId(entry.shiftType, customShifts)) {
           restTotal += 1;
-        } else {
+        } else if (isWorkShiftId(entry.shiftType, customShifts)) {
           workTotal += 1;
         }
       }

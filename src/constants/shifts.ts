@@ -18,7 +18,8 @@
  * 三者调整后落在其余 8 种班次的 4.56~10.20 区间内，无一枝独黑。
  */
 
-import type { ShiftMeta, ShiftType } from '../types/domain';
+import type { CSSProperties } from 'react';
+import type { ShiftDefinition, ShiftId, ShiftMeta, ShiftType } from '../types/domain';
 
 /** 表格 / 图例 / 选择器的统一展示顺序 */
 export const SHIFT_ORDER: readonly ShiftType[] = [
@@ -157,21 +158,21 @@ export const AUTO_ASSIGNABLE_SHIFTS: readonly ShiftType[] = SHIFT_ORDER.filter(
 const SHIFT_TYPE_SET: ReadonlySet<string> = new Set<string>(SHIFT_ORDER);
 
 /** 取班次元数据；未知 key 时降级为「休息」，保证 UI 不崩 */
-export function getShiftMeta(key: ShiftType | null | undefined): ShiftMeta {
+export function getShiftMeta(key: ShiftId | null | undefined): ShiftMeta {
   if (key && SHIFT_TYPE_SET.has(key)) {
-    return SHIFT_METAS[key];
+    return SHIFT_METAS[key as ShiftType];
   }
   return SHIFT_METAS.rest;
 }
 
 /** 取班次中文全称，未知时返回空串 */
-export function getShiftLabel(key: ShiftType | null | undefined): string {
-  return key && SHIFT_TYPE_SET.has(key) ? SHIFT_METAS[key].label : '';
+export function getShiftLabel(key: ShiftId | null | undefined): string {
+  return key && SHIFT_TYPE_SET.has(key) ? SHIFT_METAS[key as ShiftType].label : '';
 }
 
 /** 取班次表格简写，未知时返回空串 */
-export function getShiftShort(key: ShiftType | null | undefined): string {
-  return key && SHIFT_TYPE_SET.has(key) ? SHIFT_METAS[key].short : '';
+export function getShiftShort(key: ShiftId | null | undefined): string {
+  return key && SHIFT_TYPE_SET.has(key) ? SHIFT_METAS[key as ShiftType].short : '';
 }
 
 /** 运行时类型守卫，用于校验 localStorage 反序列化数据 */
@@ -180,21 +181,116 @@ export function isShiftType(value: unknown): value is ShiftType {
 }
 
 /** 是否计为工作班次 */
-export function isWorkShift(key: ShiftType | null | undefined): boolean {
-  return !!key && SHIFT_TYPE_SET.has(key) && SHIFT_METAS[key].isWork;
+export function isWorkShift(key: ShiftId | null | undefined): boolean {
+  return !!key && SHIFT_TYPE_SET.has(key) && SHIFT_METAS[key as ShiftType].isWork;
 }
 
 /** 是否为休息类班次（rest / postNightRest） */
-export function isRestShift(key: ShiftType | null | undefined): boolean {
+export function isRestShift(key: ShiftId | null | undefined): boolean {
   return key === 'rest' || key === 'postNightRest';
 }
 
 /** 是否为门诊类班次（clinic / expertClinic） */
-export function isClinicShift(key: ShiftType | null | undefined): boolean {
+export function isClinicShift(key: ShiftId | null | undefined): boolean {
   return key === 'clinic' || key === 'expertClinic';
 }
 
 /** 算法是否可主动分配该班次 */
-export function isAutoAssignable(key: ShiftType | null | undefined): boolean {
-  return !!key && SHIFT_TYPE_SET.has(key) && SHIFT_METAS[key].autoAssignable;
+export function isAutoAssignable(key: ShiftId | null | undefined): boolean {
+  return !!key && SHIFT_TYPE_SET.has(key) && SHIFT_METAS[key as ShiftType].autoAssignable;
+}
+
+// ============ 自定义班次：统一解析器（§1.2）============
+
+/**
+ * 自定义班次可选色板（12 色，与班次「浅底深字」风格一致）。
+ * 供 ShiftDefinitionForm 作为预设色板，另支持原生 color 输入自由取色。
+ */
+export const SHIFT_PALETTE: readonly string[] = [
+  '#FCE4EC', // 粉
+  '#F3E5F5', // 紫
+  '#E8EAF6', // 靛
+  '#E3F2FD', // 蓝
+  '#E0F7FA', // 青
+  '#E0F2F1', // 蓝绿
+  '#E8F5E9', // 绿
+  '#F1F8E9', // 黄绿
+  '#FFFDE7', // 黄
+  '#FFF3E0', // 橙
+  '#FBE9E7', // 红
+  '#EFEBE9', // 灰
+];
+
+/** 把 ShiftDefinition 转成 ShiftMeta（key 用 def.id） */
+function defToMeta(def: ShiftDefinition): ShiftMeta {
+  return {
+    key: def.id,
+    label: def.label,
+    short: def.short,
+    bg: def.bg,
+    fg: def.fg,
+    isWork: def.isWork,
+    autoAssignable: def.autoAssignable,
+  };
+}
+
+/**
+ * 按 id 解析班次元数据：
+ * 内置 → SHIFT_METAS；自定义 → customShifts 中按 id 查找；未知 → 降级为 rest（UI 不崩）。
+ */
+export function resolveShiftMeta(
+  id: ShiftId | null | undefined,
+  custom: readonly ShiftDefinition[],
+): ShiftMeta {
+  if (id && SHIFT_TYPE_SET.has(id)) {
+    return SHIFT_METAS[id as ShiftType];
+  }
+  if (id) {
+    const def = custom.find((d) => d.id === id);
+    if (def) {
+      return defToMeta(def);
+    }
+  }
+  return SHIFT_METAS.rest;
+}
+
+/**
+ * 全部可选班次（用于选择器 / 图例 / 轮班序列编辑器）：
+ * 内置 SHIFT_ORDER 在前，自定义在后。
+ */
+export function allShiftMetas(custom: readonly ShiftDefinition[]): ShiftMeta[] {
+  const builtin: ShiftMeta[] = SHIFT_ORDER.map((key) => SHIFT_METAS[key]);
+  const customMetas: ShiftMeta[] = custom.map((def) => defToMeta(def));
+  return [...builtin, ...customMetas];
+}
+
+/** custom-aware 的 isWork 判定（替换校验器与统计里直接用的 isWorkShift） */
+export function isWorkShiftId(id: ShiftId | null | undefined, custom: readonly ShiftDefinition[]): boolean {
+  return resolveShiftMeta(id, custom).isWork;
+}
+
+/** custom-aware 的 isRest 判定（rest / postNightRest，或自定义 isWork=false） */
+export function isRestShiftId(id: ShiftId | null | undefined, custom: readonly ShiftDefinition[]): boolean {
+  return !resolveShiftMeta(id, custom).isWork;
+}
+
+/** custom-aware 简写（替换 getShiftShort，用于 PNG/CSV） */
+export function shiftShort(id: ShiftId | null | undefined, custom: readonly ShiftDefinition[]): string {
+  return resolveShiftMeta(id, custom).short;
+}
+
+/**
+ * 单元格配色样式：
+ * - 内置班次走 CSS 变量（--shift-${key}-bg/fg），与 tokens.css 对齐；
+ * - 自定义班次走字面色（meta.bg/fg），不依赖新 CSS 变量，因此无需改 tokens.css。
+ * 返回 { '--cell-bg': string; '--cell-fg': string }，供 ShiftCell/图例/Picker/移动端复用。
+ */
+export function shiftCellStyle(meta: ShiftMeta): CSSProperties {
+  if (SHIFT_TYPE_SET.has(meta.key)) {
+    return {
+      '--cell-bg': `var(--shift-${meta.key}-bg)`,
+      '--cell-fg': `var(--shift-${meta.key}-fg)`,
+    } as CSSProperties;
+  }
+  return { '--cell-bg': meta.bg, '--cell-fg': meta.fg } as CSSProperties;
 }

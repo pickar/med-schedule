@@ -9,7 +9,7 @@
  * 由 `storage.ts` 捕获并备份原始串。
  */
 
-import type { Doctor, DoctorTitle, MonthSchedule, Rules } from '../types/domain';
+import type { Doctor, DoctorTitle, MonthSchedule, Rules, ShiftDefinition } from '../types/domain';
 import { DOCTOR_TITLES } from '../constants/palette';
 import {
   MAX_REST_DAYS,
@@ -18,7 +18,6 @@ import {
   MIN_SHIFT_COUNT,
   createDefaultRules,
 } from '../constants/defaults';
-import { isShiftType } from '../constants/shifts';
 import { isValidDateKey } from './date';
 
 /** 从 localStorage 读出的原始整包数据，迁移函数的输入输出格式 */
@@ -28,14 +27,23 @@ export interface RawBundle {
   rules: unknown;
   /** key = 'YYYY-MM' */
   schedules: Record<string, unknown>;
+  /** 自定义班次定义（v2 新增，独立 storage key） */
+  customShifts: unknown;
 }
 
 /**
  * 版本迁移表：key 为「迁移前版本」，函数把整包原始数据升到下一版。
- * v1 为初始版本，暂无迁移。新增版本时在此追加，**禁止改动历史条目**。
+ * 新增版本时在此追加，**禁止改动历史条目**。
+ *
+ * 1 → 2：仅补 `customShifts: []`（向后兼容，无字段破坏）。
+ * 仅当原包缺该字段时才补默认 []，绝不覆盖已有数据。
  */
 export const MIGRATIONS: Record<number, (raw: RawBundle) => RawBundle> = {
-  // 1: (raw) => ({ ...raw, schemaVersion: 2 }),
+  1: (raw) => ({
+    ...raw,
+    schemaVersion: 2,
+    customShifts: Array.isArray(raw.customShifts) ? raw.customShifts : [],
+  }),
 };
 
 /**
@@ -188,7 +196,9 @@ export function normalizeMonthSchedule(raw: unknown): MonthSchedule {
     }
     const day: MonthSchedule[string] = {};
     for (const [doctorId, entryRaw] of Object.entries(dayRaw)) {
-      if (!isObject(entryRaw) || !isShiftType(entryRaw.shiftType)) {
+      // ⚠️ 关键回归点：放宽 isShiftType 判定为 typeof === 'string'，
+      // 否则自定义班次 id（非 ShiftType 字面量）会被静默丢弃。
+      if (!isObject(entryRaw) || typeof entryRaw.shiftType !== 'string') {
         continue;
       }
       day[doctorId] = {
@@ -202,6 +212,45 @@ export function normalizeMonthSchedule(raw: unknown): MonthSchedule {
     if (Object.keys(day).length > 0) {
       result[date] = day;
     }
+  }
+  return result;
+}
+
+/**
+ * 归一化自定义班次定义数组。
+ * 防御原则同 normalizeDoctors：任何字段缺失 / 类型错误都退回默认并跳过该条，
+ * 绝不抛异常导致整包数据被判为损坏。
+ */
+export function normalizeCustomShifts(raw: unknown): ShiftDefinition[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const result: ShiftDefinition[] = [];
+  for (const item of raw) {
+    if (
+      !isObject(item) ||
+      typeof item.id !== 'string' ||
+      typeof item.label !== 'string' ||
+      typeof item.short !== 'string'
+    ) {
+      continue;
+    }
+    const bg =
+      typeof item.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(item.bg) ? item.bg : '#EFEBE9';
+    const fg =
+      typeof item.fg === 'string' && /^#[0-9a-fA-F]{6}$/.test(item.fg) ? item.fg : '#4E342E';
+    result.push({
+      id: item.id,
+      label: item.label.slice(0, 8),
+      short: item.short.slice(0, 3),
+      bg,
+      fg,
+      isWork: item.isWork !== false,
+      autoAssignable: item.autoAssignable === true,
+      isBuiltin: item.isBuiltin === true,
+      startTime: typeof item.startTime === 'string' ? item.startTime : undefined,
+      endTime: typeof item.endTime === 'string' ? item.endTime : undefined,
+    });
   }
   return result;
 }

@@ -1,0 +1,141 @@
+classDiagram
+    %% ===== 新增 / 变更类型 =====
+    class ShiftDefinition {
+        +string id
+        +string label
+        +string short
+        +string bg
+        +string fg
+        +boolean isWork
+        +boolean autoAssignable
+        +boolean isBuiltin
+        +string startTime$
+        +string endTime$
+    }
+
+    class ShiftMeta {
+        +string key
+        +string label
+        +string short
+        +string bg
+        +string fg
+        +boolean isWork
+        +boolean autoAssignable
+    }
+
+    class ShiftId {
+        «type alias = string»
+    }
+
+    class ShiftResolver {
+        +resolveShiftMeta(id, custom) ShiftMeta
+        +allShiftMetas(custom) ShiftMeta[]
+        +isWorkShiftId(id, custom) boolean
+        +isRestShiftId(id, custom) boolean
+        +shiftShort(id, custom) string
+        +shiftCellStyle(meta) CSSProperties
+    }
+
+    class AppState {
+        +number schemaVersion
+        +Doctor[] doctors
+        +Rules rules
+        +SchedulesByMonth schedules
+        +ShiftDefinition[] customShifts
+        +UIState ui
+        +HistoryState history
+    }
+
+    class DataSnapshot {
+        +Doctor[] doctors
+        +Rules rules
+        +SchedulesByMonth schedules
+        +ShiftDefinition[] customShifts
+    }
+
+    class ScheduleEntry {
+        +string doctorId
+        +ShiftId shiftType
+        +boolean isRotation
+        +boolean locked$
+        +boolean manual$
+    }
+
+    class ShiftCycleDraft {
+        +string doctorId
+        +ShiftId[] sequence
+        +string startDate
+        +string endDate
+        +boolean overwrite
+    }
+
+    class Action {
+        «union»
+        +shiftDef/add ShiftDefinition
+        +shiftDef/update ShiftDefinition
+        +shiftDef/remove id,clearUsages
+    }
+
+    class ShiftHandlers {
+        +addCustomShift(state, def) AppState
+        +updateCustomShift(state, def) AppState
+        +removeCustomShift(state, id, clearUsages) AppState
+    }
+
+    class RawBundle {
+        +number schemaVersion
+        +unknown doctors
+        +unknown rules
+        +Record~string,unknown~ schedules
+        +unknown customShifts
+    }
+
+    %% ===== 集成点（仅标注关系，不展开实现）=====
+    class ShiftCell
+    class ShiftPicker
+    class ShiftLegend
+    class CalendarView
+    class DoctorScheduleView
+    class SequenceEditor
+    class CyclePreview
+    class computeDailyStats
+    class computeDoctorStats
+    class validateMonth
+    class buildScheduleCsv
+    class drawScheduleTable
+    class ShiftManagerDrawer
+    class ShiftDefinitionForm
+
+    %% ===== 关系 =====
+    AppState "1" *-- "0..*" ShiftDefinition : customShifts
+    DataSnapshot "1" *-- "0..*" ShiftDefinition : customShifts
+    AppState ..> DataSnapshot : snapshotOf / hydrate
+    AppState ..> Action : dispatch
+    Action ..> ShiftHandlers : reducer.mutate
+    ShiftHandlers ..> AppState : 不可变更新
+
+    ScheduleEntry --> ShiftId : shiftType
+    ShiftCycleDraft --> ShiftId : sequence[]
+
+    ShiftResolver ..> ShiftDefinition : 自定义查找
+    ShiftResolver ..> ShiftMeta : 内置 SHIFT_METAS
+    ShiftResolver ..> ShiftId : 入参
+
+    ShiftCell ..> ShiftResolver : resolveShiftMeta
+    ShiftPicker ..> ShiftResolver : allShiftMetas
+    ShiftLegend ..> ShiftResolver : allShiftMetas
+    CalendarView ..> ShiftResolver : resolveShiftMeta
+    DoctorScheduleView ..> ShiftResolver : isWorkShiftId
+    SequenceEditor ..> ShiftResolver : allShiftMetas
+    CyclePreview ..> ShiftResolver : resolveShiftMeta
+    computeDailyStats ..> ShiftResolver : isWorkShiftId
+    computeDoctorStats ..> ShiftResolver : isRestShiftId
+    validateMonth ..> ShiftResolver : isWorkShiftId
+    buildScheduleCsv ..> ShiftResolver : shiftShort
+    drawScheduleTable ..> ShiftResolver : resolveShiftMeta / shiftShort / allShiftMetas
+
+    ShiftManagerDrawer ..> ShiftDefinitionForm : 增/编表单
+    ShiftManagerDrawer ..> Action : shiftDef/add|update|remove
+    ShiftManagerDrawer ..> AppState : 扫描引用数
+
+    RawBundle "1" *-- "0..*" ShiftDefinition : customShifts

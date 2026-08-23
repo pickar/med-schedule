@@ -18,6 +18,7 @@ import type { RawBundle } from './storageSchema';
 import {
   isObject,
   migrateBundle,
+  normalizeCustomShifts,
   normalizeDoctors,
   normalizeMonthSchedule,
   normalizeRules,
@@ -143,7 +144,8 @@ export function loadAllDetailed(): LoadResult {
   const rawMeta = readRaw(STORAGE_KEYS.meta);
   const rawDoctors = readRaw(STORAGE_KEYS.doctors);
   const rawRules = readRaw(STORAGE_KEYS.rules);
-  if (rawMeta === null && rawDoctors === null && rawRules === null) {
+  const rawShifts = readRaw(STORAGE_KEYS.shifts);
+  if (rawMeta === null && rawDoctors === null && rawRules === null && rawShifts === null) {
     return { snapshot: null, error: null, migratedFrom: null };
   }
 
@@ -164,6 +166,7 @@ export function loadAllDetailed(): LoadResult {
       doctors: parseJson(rawDoctors),
       rules: parseJson(rawRules),
       schedules: rawSchedules,
+      customShifts: parseJson(rawShifts),
     };
     const { bundle, migratedFrom } = migrateBundle(input, SCHEMA_VERSION);
 
@@ -180,6 +183,7 @@ export function loadAllDetailed(): LoadResult {
         doctors: normalizeDoctors(bundle.doctors),
         rules: normalizeRules(bundle.rules),
         schedules,
+        customShifts: normalizeCustomShifts(bundle.customShifts),
       },
       error: null,
       migratedFrom,
@@ -198,9 +202,11 @@ export function loadAllDetailed(): LoadResult {
 export function saveAll(snapshot: DataSnapshot): void {
   let doctorsJson: string;
   let rulesJson: string;
+  let shiftsJson: string;
   try {
     doctorsJson = JSON.stringify(snapshot.doctors);
     rulesJson = JSON.stringify(snapshot.rules);
+    shiftsJson = JSON.stringify(snapshot.customShifts);
   } catch (reason) {
     throw new StorageError('serialize', '数据序列化失败', reason);
   }
@@ -210,6 +216,7 @@ export function saveAll(snapshot: DataSnapshot): void {
 
   writeRaw(STORAGE_KEYS.doctors, doctorsJson);
   writeRaw(STORAGE_KEYS.rules, rulesJson);
+  writeRaw(STORAGE_KEYS.shifts, shiftsJson);
   for (const month of months) {
     writeRaw(scheduleStorageKey(month), JSON.stringify(snapshot.schedules[month]));
   }
@@ -258,5 +265,6 @@ export function clearAll(): void {
   }
   removeRaw(STORAGE_KEYS.doctors);
   removeRaw(STORAGE_KEYS.rules);
+  removeRaw(STORAGE_KEYS.shifts);
   removeRaw(STORAGE_KEYS.meta);
 }

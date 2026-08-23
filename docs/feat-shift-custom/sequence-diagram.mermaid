@@ -1,0 +1,93 @@
+%% ===== B1 新增自定义班次并落盘 =====
+sequenceDiagram
+    actor User
+    participant Drawer as ShiftManagerDrawer
+    participant Form as ShiftDefinitionForm
+    participant Dispatch as useAppDispatch
+    participant Reducer as reducer/shiftHandlers
+    participant State as AppState
+    participant Save as AppProvider(auto-save)
+    participant LS as localStorage
+
+    User->>Drawer: 点击「新增班次」
+    Drawer->>Form: 打开空白表单
+    User->>Form: 填 名称/简写/颜色/isWork/可选时间
+    Form->>Drawer: onSubmit(def: ShiftDefinition)
+    Note over Drawer: def.id = createPrefixedId('shift')
+    Drawer->>Dispatch: {type:'shiftDef/add', payload: def}
+    Dispatch->>Reducer: mutate(state, action)
+    Reducer->>State: 不可变追加 customShifts
+    Reducer->>Reducer: applyData → pushHistory(快照)
+    Reducer-->>Dispatch: 新 AppState
+    Dispatch-->>Save: state 变更(防抖 500ms)
+    Save->>LS: saveAll(snapshot 含 customShifts)
+    LS-->>Save: ok
+    Save-->>User: 抽屉刷新列出新班次
+
+%% ===== B2 选择器选自定义班次写入单元格 =====
+sequenceDiagram
+    actor User
+    participant Cell as ShiftCell(叶子)
+    participant Picker as ShiftPicker
+    participant Main as MainArea
+    participant Dispatch as useAppDispatch
+    participant Reducer as reducer/scheduleHandlers
+    participant Resolver as resolveShiftMeta
+
+    User->>Cell: 点击某格
+    Cell->>Picker: onPick(date, doctorId, anchor)
+    Main->>Picker: customShifts (prop)
+    Picker->>Resolver: allShiftMetas(customShifts)
+    Resolver-->>Picker: ShiftMeta[] (内置 + 自定义)
+    Picker->>User: 渲染含自定义班次的选项
+    User->>Picker: 选一个自定义班次 (shiftId)
+    Picker->>Dispatch: {type:'schedule/setCell', payload:{date, doctorId, shiftType: shiftId}}
+    Dispatch->>Reducer: setCell(...)
+    Reducer->>State: 不可变写入 ScheduleEntry.shiftType = shiftId
+    Note over Cell: 重渲染时 entry.shiftType 经 resolveShiftMeta 取色
+    Cell->>Resolver: resolveShiftMeta(shiftId, customShifts)
+    Resolver-->>Cell: ShiftMeta(自定义 bg/fg)
+    Cell->>Cell: shiftCellStyle(meta) 注入单元格
+
+%% ===== B3 删除被引用的自定义班次（级联置空）=====
+sequenceDiagram
+    actor User
+    participant Drawer as ShiftManagerDrawer
+    participant Scan as computeUsages(schedules, id)
+    participant Confirm as ConfirmDialog
+    participant Dispatch as useAppDispatch
+    participant Reducer as shiftHandlers.removeCustomShift
+    participant State as AppState
+
+    User->>Drawer: 点击某自定义班次「删除」
+    Drawer->>Scan: 统计引用该 id 的格子数
+    Scan-->>Drawer: count > 0
+    Drawer->>Confirm: 展示「N 处排班将清空」并请求确认
+    User->>Confirm: 确认删除
+    Drawer->>Dispatch: {type:'shiftDef/remove', payload:{id, clearUsages:true}}
+    Dispatch->>Reducer: removeCustomShift(state, id, true)
+    Reducer->>State: 过滤 customShifts 移除该定义
+    Reducer->>State: 遍历 schedules，引用该 id 的 Entry.shiftType 置 null
+    Reducer-->>Dispatch: 新 AppState(进撤销栈)
+    Note over Drawer: 表格中对应格回到空态(无幽灵班次)
+
+%% ===== B4 旧数据水合与迁移（v1 → v2）=====
+sequenceDiagram
+    participant Boot as AppProvider(启动)
+    participant Store as loadAllDetailed
+    participant Mig as migrateBundle
+    participant Norm as normalizeCustomShifts
+    participant Hyd as reducer.hydrate
+    participant State as AppState
+
+    Boot->>Store: 读取 meta/doctors/rules/schedules/shifts
+    Note over Store: 旧数据无 shifts key → raw.customShifts = undefined
+    Store->>Mig: RawBundle(schemaVersion=1)
+    Mig->>Mig: MIGRATIONS[1]: {...raw, customShifts: []}
+    Mig-->>Store: 升级到 v2
+    Store->>Norm: normalizeCustomShifts(raw.customShifts)
+    Norm-->>Store: ShiftDefinition[] (缺省 [])
+    Store-->>Boot: snapshot(含 customShifts:[])
+    Boot->>Hyd: {type:'app/hydrate', payload: snapshot}
+    Hyd->>State: 写入 doctors/rules/schedules/customShifts
+    Note over State: 旧排班引用内置 ShiftType，渲染/统计零变化

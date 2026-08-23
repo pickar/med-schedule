@@ -23,10 +23,14 @@ export type ShiftType =
   | 'rest' // 休息 · 休
   | 'postNightRest'; // 夜下休 · 夜下
 
+/** 排班/轮班中引用的班次 id：内置 ShiftType 或自定义 ShiftDefinition.id。
+ *  与 ShiftType 的关系：ShiftType 是 ShiftId 的子集，因此运行期即 string。 */
+export type ShiftId = string;
+
 /** 单个班次的展示与行为元数据，集中定义在 `constants/shifts.ts` */
 export interface ShiftMeta {
-  /** 班次 key */
-  key: ShiftType;
+  /** 班次 key；内置为 ShiftType 字面量，自定义为 ShiftDefinition.id（运行期即 string） */
+  key: ShiftId;
   /** 中文全称 */
   label: string;
   /** 表格简写 */
@@ -39,6 +43,30 @@ export interface ShiftMeta {
   isWork: boolean;
   /** 算法是否主动分配（急诊/连班/副班/总值班为 false，仅手动可选） */
   autoAssignable: boolean;
+}
+
+/** 自定义班次定义。与内置 ShiftMeta 同构，额外带 id / 是否内置 / 可选起止时间。 */
+export interface ShiftDefinition {
+  /** 唯一 id；内置复用 ShiftType 字面量，自定义用 createPrefixedId('shift') */
+  id: string;
+  /** 名称（如「门诊加强」），1~8 字 */
+  label: string;
+  /** 表格简写（1~3 字） */
+  short: string;
+  /** 背景色 #RRGGBB */
+  bg: string;
+  /** 文字色 #RRGGBB（建议与 bg 满足 WCAG AA） */
+  fg: string;
+  /** 是否计为工作班次（false = 休息类） */
+  isWork: boolean;
+  /** 算法是否可主动分配（自定义默认 false） */
+  autoAssignable: boolean;
+  /** true=内置不可删（rest / postNightRest）；false=自定义 */
+  isBuiltin: boolean;
+  /** 可选起止时间 'HH:mm' */
+  startTime?: string;
+  /** 可选起止时间 'HH:mm' */
+  endTime?: string;
 }
 
 // ============ 医生 ============
@@ -122,7 +150,8 @@ export interface Rules {
 
 export interface ScheduleEntry {
   doctorId: string;
-  shiftType: ShiftType;
+  /** 引用的班次 id：内置 ShiftType 或自定义 ShiftDefinition.id（运行期即 string） */
+  shiftType: ShiftId;
   /** 是否由轮流规则产生（random 模式不标记） */
   isRotation: boolean;
   /** 增强：P1-2 单元格锁定，重新生成时保留 */
