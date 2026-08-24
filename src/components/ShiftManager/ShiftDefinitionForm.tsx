@@ -85,7 +85,8 @@ export function ShiftDefinitionForm(props: ShiftDefinitionFormProps): React.Reac
       fg,
       isWork,
       autoAssignable,
-      isBuiltin: false,
+      // 编辑内置班次时保留其 isBuiltin 标记，不把它偷偷变成「自定义」
+      isBuiltin: initial?.isBuiltin ?? false,
       ...(startTime ? { startTime } : {}),
       ...(endTime ? { endTime } : {}),
     };

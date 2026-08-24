@@ -6,8 +6,8 @@
  * 任何绕过这两个函数的直接改写都会导致状态撕裂。
  */
 
-import type { Diagnostic, Doctor, MonthSchedule, Rules, ScheduleEntry, ShiftId } from '../../types/domain';
-import { getShiftLabel, isShiftType } from '../../constants/shifts';
+import type { Diagnostic, Doctor, MonthSchedule, Rules, ScheduleEntry, ShiftDefinition, ShiftId } from '../../types/domain';
+import { getShiftLabel, isWorkShiftId } from '../../constants/shifts';
 import { expandDateRange, getDaysInMonth, getWeekday, listMonthDates, monthOfDate } from '../../lib/date';
 import type { DayInfo, GenContext, WorkloadScore } from './types';
 import { coordKey } from './types';
@@ -17,6 +17,8 @@ export interface BuildContextParams {
   month: string;
   doctors: Doctor[];
   rules: Rules;
+  /** 当前统一班次列表（内置 + 自定义），用于白名单与 isWork 判定 */
+  shifts: ShiftDefinition[];
   existingSchedule?: MonthSchedule;
 }
 
@@ -43,7 +45,7 @@ export function buildDays(month: string): DayInfo[] {
  * 会被 pickFairest 判为「最闲」而反复加排夜班——这是最隐蔽的公平性 bug。
  */
 export function buildContext(params: BuildContextParams): GenContext {
-  const { month, doctors, rules, existingSchedule } = params;
+  const { month, doctors, rules, shifts, existingSchedule } = params;
 
   const days = buildDays(month);
   const doctorMap = new Map<string, Doctor>();
@@ -73,6 +75,8 @@ export function buildContext(params: BuildContextParams): GenContext {
     leaveNotes: new Map<string, string>(),
     scores,
     diagnostics: [],
+    shifts,
+    validShiftIds: new Set(shifts.map((s) => s.id)),
   };
 
   collectLeaves(ctx, doctors, month);
@@ -105,12 +109,12 @@ function collectLeaves(ctx: GenContext, doctors: Doctor[], month: string): void 
  *
  * 这里是**外部脏数据进入生成器的唯一入口**，四道清洗缺一不可：
  * 跨月/非法日期（靠 `ctx.days` 遍历天然过滤）、孤儿医生（`doctorMap.has`）、
- * 空条目、以及**班次白名单**（`isShiftType`）。
+ * 空条目、以及**班次白名单**（`validShiftIds`）。
  *
  * QA-BUG-03：白名单原先缺失，一个 `locked: true` 且 `shiftType: 'wtf-shift'`
  * 的格子会原样进入生成结果，进而污染统计与渲染。非法班次视同该格不存在——
  * 不做「降级为休息」，因为凭空造一个用户没排过的休息，比丢掉一个本就无意义的
- * 脏格子更容易误导人。
+ * 脏格子更容易误导人。被用户从管理器中删除的班次同样视为非法、丢弃。
  */
 function restoreLockedCells(ctx: GenContext, existingSchedule?: MonthSchedule): void {
   if (!existingSchedule) {
@@ -125,7 +129,7 @@ function restoreLockedCells(ctx: GenContext, existingSchedule?: MonthSchedule): 
       if (!entry || entry.locked !== true || !ctx.doctorMap.has(entry.doctorId)) {
         continue;
       }
-      if (!isShiftType(entry.shiftType)) {
+      if (!ctx.validShiftIds.has(entry.shiftType)) {
         continue;
       }
       ctx.lockedSet.add(coordKey(day.date, entry.doctorId));
@@ -140,7 +144,7 @@ function writeEntry(ctx: GenContext, date: string, entry: ScheduleEntry): void {
   ctx.occupied.get(date)?.add(entry.doctorId);
   const score = ctx.scores.get(entry.doctorId);
   if (score) {
-    applyShiftToScore(score, entry.shiftType, 1);
+    applyShiftToScore(score, entry.shiftType, 1, isWorkShiftId(entry.shiftType, ctx.shifts));
   }
 }
 
@@ -162,6 +166,9 @@ export function assign(
   shiftType: ShiftId,
   options: AssignOptions = {},
 ): boolean {
+  if (!ctx.validShiftIds.has(shiftType)) {
+    return false;
+  }
   if (ctx.lockedSet.has(coordKey(date, doctorId))) {
     return false;
   }
@@ -202,7 +209,7 @@ export function unassign(ctx: GenContext, date: string, doctorId: string): Shift
   ctx.occupied.get(date)?.delete(doctorId);
   const score = ctx.scores.get(doctorId);
   if (score) {
-    applyShiftToScore(score, entry.shiftType, -1);
+    applyShiftToScore(score, entry.shiftType, -1, isWorkShiftId(entry.shiftType, ctx.shifts));
   }
   return entry.shiftType;
 }

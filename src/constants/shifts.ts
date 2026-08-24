@@ -235,20 +235,64 @@ function defToMeta(def: ShiftDefinition): ShiftMeta {
 }
 
 /**
- * 按 id 解析班次元数据：
- * 内置 → SHIFT_METAS；自定义 → customShifts 中按 id 查找；未知 → 降级为 rest（UI 不崩）。
+ * 把 11 个内置班次作为 `isBuiltin:true` 条目并入统一列表。
+ * 已存在同 id 的条目（内置或早期同名自定义）原样保留，其余追加。
+ *
+ * ⚠️ 幂等且「一次性」：仅用于初始化 / 迁移 / 清空白名单重灌，绝不在每次读取时调用，
+ * 否则用户删除的内置班次会被反复加回（删除将永远不持久）。
+ */
+export function seedBuiltinShifts(existing: readonly ShiftDefinition[]): ShiftDefinition[] {
+  const byId = new Map(existing.map((d) => [d.id, d]));
+  const result: ShiftDefinition[] = [];
+  for (const key of SHIFT_ORDER) {
+    const found = byId.get(key);
+    if (found) {
+      result.push(found);
+      continue;
+    }
+    const meta = SHIFT_METAS[key];
+    result.push({
+      id: meta.key,
+      label: meta.label,
+      short: meta.short,
+      bg: meta.bg,
+      fg: meta.fg,
+      isWork: meta.isWork,
+      autoAssignable: meta.autoAssignable,
+      isBuiltin: true,
+    });
+  }
+  for (const d of existing) {
+    if (!SHIFT_TYPE_SET.has(d.id)) {
+      result.push(d);
+    }
+  }
+  return result;
+}
+
+/** 该班次 id 是否存在于当前统一列表（用于生成器白名单 / 锁定格还原 / 校验） */
+export function isValidShiftId(
+  id: ShiftId | null | undefined,
+  custom: readonly ShiftDefinition[],
+): boolean {
+  return !!id && custom.some((d) => d.id === id);
+}
+
+/**
+ * 按 id 解析班次元数据：统一列表（`custom` 已含内置 + 自定义）优先；
+ * 兜底——内置 id 尚未进入统一列表（迁移前的旧数据）按常量解析；未知 → 降级为 rest（UI 不崩）。
  */
 export function resolveShiftMeta(
   id: ShiftId | null | undefined,
   custom: readonly ShiftDefinition[],
 ): ShiftMeta {
-  if (id && SHIFT_TYPE_SET.has(id)) {
-    return SHIFT_METAS[id as ShiftType];
-  }
   if (id) {
     const def = custom.find((d) => d.id === id);
     if (def) {
       return defToMeta(def);
+    }
+    if (SHIFT_TYPE_SET.has(id)) {
+      return SHIFT_METAS[id as ShiftType];
     }
   }
   return SHIFT_METAS.rest;
@@ -256,12 +300,10 @@ export function resolveShiftMeta(
 
 /**
  * 全部可选班次（用于选择器 / 图例 / 轮班序列编辑器）：
- * 内置 SHIFT_ORDER 在前，自定义在后。
+ * 统一列表已包含「内置（isBuiltin:true）+ 自定义」，直接映射即可。
  */
 export function allShiftMetas(custom: readonly ShiftDefinition[]): ShiftMeta[] {
-  const builtin: ShiftMeta[] = SHIFT_ORDER.map((key) => SHIFT_METAS[key]);
-  const customMetas: ShiftMeta[] = custom.map((def) => defToMeta(def));
-  return [...builtin, ...customMetas];
+  return custom.map((def) => defToMeta(def));
 }
 
 /** custom-aware 的 isWork 判定（替换校验器与统计里直接用的 isWorkShift） */
@@ -280,17 +322,11 @@ export function shiftShort(id: ShiftId | null | undefined, custom: readonly Shif
 }
 
 /**
- * 单元格配色样式：
- * - 内置班次走 CSS 变量（--shift-${key}-bg/fg），与 tokens.css 对齐；
- * - 自定义班次走字面色（meta.bg/fg），不依赖新 CSS 变量，因此无需改 tokens.css。
+ * 单元格配色样式（统一列表接管全部配色）：
+ * 内置班次被编辑后也能即时反映，且屏幕渲染与 PNG 导出（canvas 同样走 resolveShiftMeta）
+ * 始终保持同一套颜色，避免「屏幕和导出图不是一个颜色」。
  * 返回 { '--cell-bg': string; '--cell-fg': string }，供 ShiftCell/图例/Picker/移动端复用。
  */
 export function shiftCellStyle(meta: ShiftMeta): CSSProperties {
-  if (SHIFT_TYPE_SET.has(meta.key)) {
-    return {
-      '--cell-bg': `var(--shift-${meta.key}-bg)`,
-      '--cell-fg': `var(--shift-${meta.key}-fg)`,
-    } as CSSProperties;
-  }
   return { '--cell-bg': meta.bg, '--cell-fg': meta.fg } as CSSProperties;
 }

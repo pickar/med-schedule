@@ -6,7 +6,16 @@
  * 把纯类型抽到叶子文件即可让依赖图保持单向（types ← context ← stages ← index）。
  */
 
-import type { Diagnostic, Doctor, MonthSchedule, Rules, ScheduleEntry, ShiftType } from '../../types/domain';
+import type {
+  Diagnostic,
+  Doctor,
+  MonthSchedule,
+  Rules,
+  ScheduleEntry,
+  ShiftDefinition,
+  ShiftId,
+  ShiftType,
+} from '../../types/domain';
 
 /** 某一天的静态信息，阶段间复用，避免重复解析日期 */
 export interface DayInfo {
@@ -67,6 +76,10 @@ export interface GenContext {
   leaveNotes: Map<string, string>;
   scores: Map<string, WorkloadScore>;
   diagnostics: Diagnostic[];
+  /** 当前统一班次列表（内置 + 自定义），用于白名单与 isWork 判定 */
+  shifts: ShiftDefinition[];
+  /** 当前有效班次 id 集合，被删除的班次不在其中 —— 生成器据此拒绝再分配它 */
+  validShiftIds: Set<ShiftId>;
 }
 
 /** `generateSchedule()` 的入参 */
@@ -74,6 +87,8 @@ export interface GenerateParams {
   month: string;
   doctors: Doctor[];
   rules: Rules;
+  /** 当前统一班次列表（内置 + 自定义），生成器据此判断哪些班次可分配 */
+  shifts: ShiftDefinition[];
   /** 已有排班，仅用于提取锁定格；不传视为全新生成 */
   existingSchedule?: MonthSchedule;
 }
@@ -96,7 +111,8 @@ export type IneligibleReason =
   | 'weekendOff' // 个人约束：周末不上班
   | 'consecutiveNight' // 禁连夜
   | 'nextDayBlocked' // 次日夜下休位置被锁定/占用，夜班无法原子写入
-  | 'notAutoAssignable'; // 该班次不参与自动分配
+  | 'notAutoAssignable' // 该班次不参与自动分配
+  | 'unknownShift'; // 该班次已被用户从管理器中删除，不再分配
 
 export interface EligibilityResult {
   ok: boolean;

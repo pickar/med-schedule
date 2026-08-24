@@ -65,6 +65,7 @@ export function generateScheduleDetailed(params: GenerateParams): DetailedGenera
     month: params.month,
     doctors: params.doctors,
     rules: params.rules,
+    shifts: params.shifts,
     existingSchedule: params.existingSchedule,
   });
 

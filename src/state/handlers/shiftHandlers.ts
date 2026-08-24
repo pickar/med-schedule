@@ -21,9 +21,10 @@ import type {
 /** 自定义班次总数上限（设计 §4 边界约定，Q5 默认 30） */
 export const MAX_CUSTOM_SHIFTS = 30;
 
-/** 新增自定义班次（达到上限时拒绝，返回原引用） */
+/** 新增自定义班次（达到上限时拒绝，返回原引用）。上限只计「自定义」班次，不含内置 */
 export function addCustomShift(state: AppState, def: ShiftDefinition): AppState {
-  if (state.customShifts.length >= MAX_CUSTOM_SHIFTS) {
+  const customCount = state.customShifts.filter((d) => !d.isBuiltin).length;
+  if (customCount >= MAX_CUSTOM_SHIFTS) {
     return state;
   }
   return { ...state, customShifts: [...state.customShifts, def] };
@@ -44,10 +45,12 @@ export function updateCustomShift(state: AppState, def: ShiftDefinition): AppSta
 }
 
 /**
- * 删除自定义班次。
- * - 内置班次（isBuiltin）不可删，原样返回。
+ * 删除班次（内置 / 自定义皆可）。
  * - 不存在的 id 原样返回。
  * - `clearUsages` 为 true 时，级联删除所有引用该 id 的排班条目（空即删）。
+ *
+ * 注：内置班次不再有「不可删」特权（用户需求：所有班次都可管理）。
+ * 删除被引用班次时由调用方（管理器）先弹确认框、再传 clearUsages=true 级联置空。
  */
 export function removeCustomShift(
   state: AppState,
@@ -55,7 +58,7 @@ export function removeCustomShift(
   clearUsages: boolean,
 ): AppState {
   const def = state.customShifts.find((d) => d.id === id);
-  if (!def || def.isBuiltin) {
+  if (!def) {
     return state;
   }
   const nextCustom = state.customShifts.filter((d) => d.id !== id);

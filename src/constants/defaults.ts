@@ -10,7 +10,7 @@ import type { Doctor, DoctorTitle, Rules, WeekdayShiftConfig } from '../types/do
 import { DOCTOR_COLORS } from './palette';
 
 /** 数据结构版本号，任何破坏性字段变更都必须 +1 并补 MIGRATIONS */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** localStorage key 命名空间 */
 export const STORAGE_NAMESPACE = 'warmshift:v1';

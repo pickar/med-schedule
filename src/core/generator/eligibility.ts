@@ -52,6 +52,11 @@ export function canAssign(
     return ineligible('occupied');
   }
 
+  // 该班次已被用户从管理器中删除，不再分配（否则「删了又回来」），修复阶段亦同
+  if (!ctx.validShiftIds.has(shiftType)) {
+    return ineligible('unknownShift');
+  }
+
   // ① 锁定格永不可覆盖（优先级高于一切，包括修复阶段）
   if (isLocked(ctx, day.date, doctorId)) {
     return ineligible('locked');

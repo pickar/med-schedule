@@ -14,6 +14,7 @@
 import type { Action, AppState, UIState } from '../types/state';
 import type { DataSnapshot } from '../types/state';
 import { createDefaultRules, SCHEMA_VERSION } from '../constants/defaults';
+import { seedBuiltinShifts } from '../constants/shifts';
 import { currentMonthKey, formatMD, formatMonthLabel, monthOfDate } from '../lib/date';
 import { weekdayLabel } from '../constants/texts';
 import { emptyHistory, pushHistory, redo, snapshotOf, undo } from './history';
@@ -62,7 +63,7 @@ export function createInitialState(): AppState {
     doctors: [],
     rules: createDefaultRules(),
     schedules: {},
-    customShifts: [],
+    customShifts: seedBuiltinShifts([]),
     ui: createInitialUIState(),
     history: emptyHistory(),
   };
@@ -187,7 +188,7 @@ function clearAllData(state: AppState): AppState {
   ) {
     return state;
   }
-  return { ...state, doctors: [], schedules: {}, rules: createDefaultRules(), customShifts: [] };
+  return { ...state, doctors: [], schedules: {}, rules: createDefaultRules(), customShifts: seedBuiltinShifts([]) };
 }
 
 // ============ 历史文案 ============

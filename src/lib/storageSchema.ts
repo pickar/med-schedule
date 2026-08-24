@@ -11,6 +11,7 @@
 
 import type { Doctor, DoctorTitle, MonthSchedule, Rules, ShiftDefinition } from '../types/domain';
 import { DOCTOR_TITLES } from '../constants/palette';
+import { seedBuiltinShifts } from '../constants/shifts';
 import {
   MAX_REST_DAYS,
   MAX_SHIFT_COUNT,
@@ -37,12 +38,22 @@ export interface RawBundle {
  *
  * 1 → 2：仅补 `customShifts: []`（向后兼容，无字段破坏）。
  * 仅当原包缺该字段时才补默认 []，绝不覆盖已有数据。
+ *
+ * 2 → 3：把 11 个内置班次作为 `isBuiltin:true` 种子并入统一列表 `customShifts`
+ * （此前内置班次写死在 `constants/shifts.ts`，与管理器不可见、不可改）。
+ * 仅当该内置 id 尚不存在时才追加，绝不覆盖用户已自定义的同名条目。
+ * 迁移只跑一次（schemaVersion 升到 3 后不再触发），用户删除的内置班次不会复活。
  */
 export const MIGRATIONS: Record<number, (raw: RawBundle) => RawBundle> = {
   1: (raw) => ({
     ...raw,
     schemaVersion: 2,
     customShifts: Array.isArray(raw.customShifts) ? raw.customShifts : [],
+  }),
+  2: (raw) => ({
+    ...raw,
+    schemaVersion: 3,
+    customShifts: seedBuiltinShifts(normalizeCustomShifts(raw.customShifts)),
   }),
 };
 

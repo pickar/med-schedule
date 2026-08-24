@@ -93,6 +93,7 @@ export function GenerateFlow(): React.ReactElement {
           month,
           doctors: snapshot.doctors,
           rules: snapshot.rules,
+          shifts: snapshot.customShifts,
           existingSchedule: selectMonthSchedule(snapshot, month),
         });
       })();

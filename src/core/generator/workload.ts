@@ -42,8 +42,10 @@ export function burden(s: BurdenInput): number {
 /**
  * 把一次班次落位累加进计分。
  * @param delta +1 表示落位，-1 表示撤销（阶段 5/6 会撤销已排班次）
+ * @param isWork 仅当 `shiftType` 不在内置专项计数分支时（自定义班次）使用，
+ *   决定计入 `workCount` 还是 `restCount`。内置班次走上面的专项分支，忽略此参数。
  */
-export function applyShiftToScore(score: WorkloadScore, shiftType: ShiftId, delta: 1 | -1): void {
+export function applyShiftToScore(score: WorkloadScore, shiftType: ShiftId, delta: 1 | -1, isWork = false): void {
   switch (shiftType) {
     case 'nightShift':
       score.nightCount += delta;
@@ -73,6 +75,12 @@ export function applyShiftToScore(score: WorkloadScore, shiftType: ShiftId, delt
       score.postNightCount += delta;
       return;
     default:
+      // 自定义班次：按是否为工作班次计入总工作量（rest 专项仅在生成器硬编码分支处理）
+      if (isWork) {
+        score.workCount += delta;
+      } else {
+        score.restCount += delta;
+      }
       return;
   }
 }

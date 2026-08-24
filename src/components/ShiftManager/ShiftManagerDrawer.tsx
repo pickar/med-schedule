@@ -12,7 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { ShiftDefinition, ShiftId, SchedulesByMonth } from '../../types/domain';
 import { useAppDispatch, useAppState } from '../../state/contexts';
-import { allShiftMetas, resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
+import { resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { MAX_CUSTOM_SHIFTS } from '../../state/handlers/shiftHandlers';
 import { TEXTS } from '../../constants/texts';
 import { Drawer, DrawerSection } from '../ui/Drawer';
@@ -51,8 +51,17 @@ export function ShiftManagerDrawer(): React.ReactElement {
   const [pendingRemove, setPendingRemove] = useState<ShiftDefinition | null>(null);
 
   const usages = useMemo(() => countUsages(state.schedules), [state.schedules]);
-  const builtinMetas = useMemo(() => allShiftMetas([]).filter((m) => !state.customShifts.some((d) => d.id === m.key)), [state.customShifts]);
-  const maxReached = state.customShifts.length >= MAX_CUSTOM_SHIFTS;
+  // 统一列表已包含「内置（isBuiltin:true）+ 自定义」，按标记拆分展示，但两者都可编辑 / 可删除
+  const builtinShifts = useMemo(
+    () => state.customShifts.filter((d) => d.isBuiltin),
+    [state.customShifts],
+  );
+  const customShifts = useMemo(
+    () => state.customShifts.filter((d) => !d.isBuiltin),
+    [state.customShifts],
+  );
+  // 上限只计「自定义」班次，不含 11 个内置
+  const maxReached = customShifts.length >= MAX_CUSTOM_SHIFTS;
 
   const handleAdd = useCallback((): void => setEditing(null), []);
   const handleEdit = useCallback((def: ShiftDefinition): void => setEditing(def), []);
@@ -84,6 +93,41 @@ export function ShiftManagerDrawer(): React.ReactElement {
 
   const drawerTitle = editing === null ? TEXTS.shiftManagerNewTitle : editing ? TEXTS.shiftManagerEditTitle : TEXTS.shiftManagerTitle;
 
+  const renderItem = (def: ShiftDefinition): React.ReactElement => {
+    const meta = resolveShiftMeta(def.id, state.customShifts);
+    const used = usages.get(def.id) ?? 0;
+    return (
+      <li key={def.id} className="shift-manager-item">
+        <span className="shift-manager__swatch" style={shiftCellStyle(meta)}>
+          {meta.short}
+        </span>
+        <span className="shift-manager__name">
+          {meta.label}
+          {def.isBuiltin && <span className="tag tag--muted">{TEXTS.shiftManagerBuiltinTag}</span>}
+          {used > 0 && (
+            <span className="shift-manager__count">{TEXTS.shiftManagerUsedCount(used)}</span>
+          )}
+        </span>
+        <span className="shift-manager__actions">
+          <IconButton
+            icon="edit"
+            label={TEXTS.edit}
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(def)}
+          />
+          <IconButton
+            icon="trash"
+            label={TEXTS.delete}
+            variant="ghost"
+            size="sm"
+            onClick={() => setPendingRemove(def)}
+          />
+        </span>
+      </li>
+    );
+  };
+
   return (
     <Drawer
       open={open}
@@ -109,15 +153,7 @@ export function ShiftManagerDrawer(): React.ReactElement {
         <>
           <DrawerSection title={TEXTS.shiftManagerBuiltinSection} hint={TEXTS.shiftManagerBuiltinHint}>
             <ul className="shift-manager-list">
-              {builtinMetas.map((meta) => (
-                <li key={meta.key} className="shift-manager-item">
-                  <span className="shift-manager__swatch" style={shiftCellStyle(meta)}>
-                    {meta.short}
-                  </span>
-                  <span className="shift-manager__name">{meta.label}</span>
-                  <span className="tag tag--muted">{TEXTS.shiftManagerBuiltinTag}</span>
-                </li>
-              ))}
+              {builtinShifts.map((def) => renderItem(def))}
             </ul>
           </DrawerSection>
 
@@ -136,43 +172,11 @@ export function ShiftManagerDrawer(): React.ReactElement {
               )}
             </div>
 
-            {state.customShifts.length === 0 ? (
+            {customShifts.length === 0 ? (
               <p className="panel-empty panel-empty--tight">{TEXTS.shiftManagerEmpty}</p>
             ) : (
               <ul className="shift-manager-list">
-                {state.customShifts.map((def) => {
-                  const meta = resolveShiftMeta(def.id, state.customShifts);
-                  const used = usages.get(def.id) ?? 0;
-                  return (
-                    <li key={def.id} className="shift-manager-item">
-                      <span className="shift-manager__swatch" style={shiftCellStyle(meta)}>
-                        {meta.short}
-                      </span>
-                      <span className="shift-manager__name">
-                        {meta.label}
-                        {used > 0 && (
-                          <span className="shift-manager__count">{TEXTS.shiftManagerUsedCount(used)}</span>
-                        )}
-                      </span>
-                      <span className="shift-manager__actions">
-                        <IconButton
-                          icon="edit"
-                          label={TEXTS.edit}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(def)}
-                        />
-                        <IconButton
-                          icon="trash"
-                          label={TEXTS.delete}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPendingRemove(def)}
-                        />
-                      </span>
-                    </li>
-                  );
-                })}
+                {customShifts.map((def) => renderItem(def))}
               </ul>
             )}
           </DrawerSection>
