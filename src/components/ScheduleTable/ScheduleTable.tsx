@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import type { Doctor, ShiftType } from '../../types/domain';
+import type { Doctor, ShiftDefinition, ShiftId } from '../../types/domain';
 import type { CellRef } from '../../types/state';
 import type { DailyStat, DoctorStat } from '../../core/stats';
 import { TEXTS } from '../../constants/texts';
@@ -46,7 +46,9 @@ export interface ScheduleTableProps {
   highlightDoctorId: string | null;
   /** 派生数据尚未跟上当前月份 */
   stale: boolean;
-  onSetCell: (date: string, doctorId: string, shiftType: ShiftType | null) => void;
+  /** 自定义班次定义（透传给行 / 选择器 / 图例） */
+  customShifts: readonly ShiftDefinition[];
+  onSetCell: (date: string, doctorId: string, shiftType: ShiftId | null) => void;
   onToggleLock: (date: string, doctorId: string) => void;
   onToggleStats: () => void;
   onToggleLegend: () => void;
@@ -67,6 +69,7 @@ export function ScheduleTable(props: ScheduleTableProps): React.ReactElement {
     highlightCell,
     highlightDoctorId,
     stale,
+    customShifts,
     onSetCell,
     onToggleLock,
     onToggleStats,
@@ -101,7 +104,7 @@ export function ScheduleTable(props: ScheduleTableProps): React.ReactElement {
   }, []);
 
   const handleSelect = useCallback(
-    (shiftType: ShiftType | null): void => {
+    (shiftType: ShiftId | null): void => {
       if (picker !== null) {
         onSetCell(picker.date, picker.doctorId, shiftType);
         setPicker(null);
@@ -135,7 +138,7 @@ export function ScheduleTable(props: ScheduleTableProps): React.ReactElement {
 
   return (
     <div className="schedule">
-      <ShiftLegend expanded={legendExpanded} onToggle={onToggleLegend} />
+      <ShiftLegend expanded={legendExpanded} customShifts={customShifts} onToggle={onToggleLegend} />
 
       <div className="schedule__table-wrap">
         <table className="table" aria-label={TEXTS.statsRowLabel}>
@@ -162,6 +165,7 @@ export function ScheduleTable(props: ScheduleTableProps): React.ReactElement {
                       : undefined
                   }
                   isHighlightedRow={highlightDoctorId === doctor.id}
+                  customShifts={customShifts}
                   onPick={handlePick}
                 />
               );
@@ -187,6 +191,7 @@ export function ScheduleTable(props: ScheduleTableProps): React.ReactElement {
           doctorName={target.name}
           doctorTitle={TITLE_SHORT[target.title]}
           entry={targetEntry}
+          customShifts={customShifts}
           onSelect={handleSelect}
           onToggleLock={handleToggleLock}
           onClose={handleClose}

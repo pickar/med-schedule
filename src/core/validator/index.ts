@@ -8,7 +8,7 @@
  * 3. **空排班短路**：无排班时直接返回空结果，避免为「还没生成」的月份跑全量检测。
  */
 
-import type { Doctor, MonthSchedule, Rules } from '../../types/domain';
+import type { Doctor, MonthSchedule, Rules, ShiftDefinition } from '../../types/domain';
 import type { ValidationResult, Violation } from '../../types/validation';
 import { SEVERITY_WEIGHT, cellKey, emptyValidationResult, statCellKey } from '../../types/validation';
 import { listMonthDates } from '../../lib/date';
@@ -27,11 +27,13 @@ export interface ValidateParams {
   schedule: MonthSchedule;
   doctors: Doctor[];
   rules: Rules;
+  /** 自定义班次定义（custom-aware 校验用） */
+  customShifts: readonly ShiftDefinition[];
 }
 
 /** 全量校验某月排班，产出违规清单 + 三套索引 */
 export function validateMonth(params: ValidateParams): ValidationResult {
-  const { month, schedule, doctors, rules } = params;
+  const { month, schedule, doctors, rules, customShifts } = params;
 
   // 无医生或无排班：没有可校验对象，直接返回空结果
   // （`Array.isArray` / `schedule` 判空是 BUG-01 的防御：畸形入参一律按「没得校验」处理）
@@ -55,6 +57,7 @@ export function validateMonth(params: ValidateParams): ValidationResult {
     doctorMap,
     rules,
     leaveMap: buildLeaveMap(doctors, month),
+    customShifts,
   };
 
   const violations = [

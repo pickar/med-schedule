@@ -341,3 +341,168 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ========== 班次管理抽屉 ==========
+   ⚠️ 班次色来自组件内联 style（CSS 变量或字面色），此处只定形状与间距，不写色值。 */
+
+.shift-manager__add {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.shift-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shift-manager-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-btn);
+  background: var(--bg-surface);
+}
+
+.shift-manager__swatch {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-cell);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  background: var(--cell-bg, var(--bg-muted));
+  color: var(--cell-fg, var(--text-primary));
+}
+
+.shift-manager__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-md);
+}
+
+.shift-manager__count {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.shift-manager__actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+}
+.tag--muted {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+
+/* ========== 班次定义表单 ========== */
+
+.shift-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.shift-form__preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-card);
+  background: var(--cell-bg, var(--bg-muted));
+  color: var(--cell-fg, var(--text-primary));
+}
+.shift-form__preview-short {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+.shift-form__preview-label {
+  font-size: var(--fs-md);
+}
+
+.shift-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.shift-form__usage {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
+
+.color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-cell);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--border-base);
+}
+.color-swatch.is-active {
+  border-color: var(--primary-600);
+}
+.color-swatch:focus-visible {
+  outline: 2px solid var(--primary-600);
+  outline-offset: 1px;
+}
+
+.color-custom {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.color-custom input[type='color'] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-cell);
+  background: none;
+  cursor: pointer;
+}
+
+.field-row {
+  display: flex;
+  gap: var(--sp-3);
+}
+.field-row .field {
+  flex: 1 1 0;
+}

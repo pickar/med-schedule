@@ -9,10 +9,9 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
-import type { ScheduleEntry, ShiftType } from '../../types/domain';
+import type { ScheduleEntry, ShiftId } from '../../types/domain';
 import { useAppDispatch, useAppState } from '../../state/contexts';
-import { SHIFT_METAS } from '../../constants/shifts';
+import { resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS, WEEKDAY_LABELS } from '../../constants/texts';
 import {
   currentMonthKey,
@@ -62,7 +61,7 @@ export function CalendarView(): React.ReactElement {
   const closeSheet = useCallback(() => setActiveDate(null), []);
 
   const handleSelect = useCallback(
-    (doctorId: string, shiftType: ShiftType) => {
+    (doctorId: string, shiftType: ShiftId) => {
       if (!activeDate) {
         return;
       }
@@ -188,12 +187,9 @@ export function CalendarView(): React.ReactElement {
                 ) : (
                   <>
                     {assigned.slice(0, MAX_DOTS).map((doctor) => {
-                      const shiftType = dayMap[doctor.id].shiftType as ShiftType;
-                      const meta = SHIFT_METAS[shiftType];
-                      const style = {
-                        '--cell-bg': `var(--shift-${meta.key}-bg)`,
-                        '--cell-fg': `var(--shift-${meta.key}-fg)`,
-                      } as CSSProperties;
+                      const shiftType = dayMap[doctor.id].shiftType;
+                      const meta = resolveShiftMeta(shiftType, state.customShifts);
+                      const style = shiftCellStyle(meta);
                       return (
                         <span
                           key={doctor.id}
@@ -223,6 +219,7 @@ export function CalendarView(): React.ReactElement {
         doctors={doctors}
         monthSchedule={monthSchedule}
         isOnLeave={isOnLeave}
+        customShifts={state.customShifts}
         onSelect={handleSelect}
         onClear={handleClear}
         onToggleLock={handleToggleLock}

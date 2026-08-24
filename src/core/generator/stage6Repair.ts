@@ -10,7 +10,7 @@
  * 校验器把它们透明暴露给用户处理，才是正确的产品行为。
  */
 
-import type { ShiftType } from '../../types/domain';
+import type { ShiftId } from '../../types/domain';
 import { MAX_REPAIR_ROUNDS } from '../../constants/defaults';
 import { getShiftLabel } from '../../constants/shifts';
 import { assign, countShiftOnDay, rangeOf, toMonthSchedule, unassign } from './context';
@@ -41,6 +41,7 @@ export function runStage6Repair(ctx: GenContext): Stage6Result {
       schedule: toMonthSchedule(ctx),
       doctors: ctx.doctors,
       rules: ctx.rules,
+      customShifts: [],
     });
 
     const fixedPostRest = repairMissingPostRest(ctx, result.violations);
@@ -94,7 +95,7 @@ function repairMissingPostRest(
 /** 人数不足时，从当日可挪用的班次中调人补位 */
 function repairBelowMin(
   ctx: GenContext,
-  violations: readonly { type: string; date?: string; shiftType?: ShiftType }[],
+  violations: readonly { type: string; date?: string; shiftType?: ShiftId }[],
 ): number {
   let fixed = 0;
 
@@ -136,7 +137,7 @@ function repairBelowMin(
  * 绝不动 clinic / expertClinic / nightShift / postNightRest / 锁定格。
  */
 function borrowOne(ctx: GenContext, day: DayInfo, target: 'dayShift' | 'nightShift'): boolean {
-  const sources: ShiftType[] = target === 'nightShift' ? ['ward', 'rest', 'dayShift'] : ['ward', 'rest'];
+  const sources: ShiftId[] = target === 'nightShift' ? ['ward', 'rest', 'dayShift'] : ['ward', 'rest'];
 
   for (const source of sources) {
     const candidates = collectBorrowable(ctx, day, source, target);
@@ -168,7 +169,7 @@ function borrowOne(ctx: GenContext, day: DayInfo, target: 'dayShift' | 'nightShi
 function collectBorrowable(
   ctx: GenContext,
   day: DayInfo,
-  source: ShiftType,
+  source: ShiftId,
   target: 'dayShift' | 'nightShift',
 ): string[] {
   const dayMap = ctx.assigned.get(day.date);
@@ -202,8 +203,8 @@ function recordBorrow(
   ctx: GenContext,
   date: string,
   doctorId: string,
-  from: ShiftType,
-  to: ShiftType,
+  from: ShiftId,
+  to: ShiftId,
 ): void {
   const name = ctx.doctorMap.get(doctorId)?.name ?? doctorId;
   ctx.diagnostics.push({

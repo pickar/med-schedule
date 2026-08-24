@@ -58,6 +58,7 @@ const ICON_PATHS = {
   loader:
     'M12 3v4M12 17v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M3 12h4M17 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9',
   more: 'M6.2 12h.2M12 12h.2M17.8 12h.2',
+  layers: 'M12 3 3 8l9 5 9-5-9-5M3 13l9 5 9-5M3 18l9 5 9-5',
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

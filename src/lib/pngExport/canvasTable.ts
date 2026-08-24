@@ -12,9 +12,15 @@
  * 2. 绘制顺序是「底色 → 内容 → 网格线」。网格线最后画，才不会被单元格底色盖掉半边。
  */
 
-import type { Doctor, MonthSchedule } from '../../types/domain';
+import type { Doctor, MonthSchedule, ShiftDefinition } from '../../types/domain';
 import type { DailyStat, DoctorStat } from '../../core/stats';
-import { PRIMARY_STAT_SHIFTS, SHIFT_METAS, SHIFT_ORDER, getShiftShort } from '../../constants/shifts';
+import {
+  PRIMARY_STAT_SHIFTS,
+  SHIFT_METAS,
+  allShiftMetas,
+  resolveShiftMeta,
+  shiftShort,
+} from '../../constants/shifts';
 import { TITLE_SHORT, WEEKDAY_NAMES } from '../../constants/palette';
 import { scheduleTitle } from '../../constants/texts';
 import { listMonthDates, parseDateKey } from '../date';
@@ -50,6 +56,8 @@ export interface PngTableParams {
   /** 与 `listMonthDates(month)` 同序等长 */
   dailyStats: readonly DailyStat[];
   doctorStatsById: Record<string, DoctorStat>;
+  /** 自定义班次定义（custom-aware 绘制用） */
+  customShifts: readonly ShiftDefinition[];
 }
 
 export interface TableLayout {
@@ -142,11 +150,15 @@ export function ellipsize(text: string, maxWidth: number, fontSize: number): str
 }
 
 /** 依据天数与医生数算出画布尺寸与各区块位置（DESIGN 9.1 的公式） */
-export function computeTableLayout(dayCount: number, doctorCount: number): TableLayout {
+export function computeTableLayout(
+  dayCount: number,
+  doctorCount: number,
+  customShifts: readonly ShiftDefinition[],
+): TableLayout {
   const statsRowCount = PRIMARY_STAT_SHIFTS.length;
   const width = COL_DOCTOR_W + dayCount * COL_DAY_W + COL_REST_W * 2 + PADDING * 2;
   const perRow = Math.max(1, Math.floor((width - PADDING * 2) / LEGEND_ITEM_W));
-  const legendRows = Math.ceil(SHIFT_ORDER.length / perRow);
+  const legendRows = Math.ceil(allShiftMetas(customShifts).length / perRow);
 
   const headerY = PADDING + TITLE_H;
   const bodyY = headerY + HEADER_H * 2;
@@ -235,6 +247,7 @@ function drawDoctorRow(
   layout: TableLayout,
   dates: string[],
   schedule: MonthSchedule,
+  customShifts: readonly ShiftDefinition[],
   y: number,
 ): void {
   const titleShort = TITLE_SHORT[doctor.title] ?? '';
@@ -262,13 +275,13 @@ function drawDoctorRow(
     if (!entry) {
       return;
     }
-    const meta = SHIFT_METAS[entry.shiftType];
+    const meta = resolveShiftMeta(entry.shiftType, customShifts);
     const x = dayX(layout, index);
     ctx.fillStyle = meta.bg;
     ctx.fillRect(x + 1, y + 1, layout.colDayW - 2, layout.rowH - 2);
     ctx.fillStyle = meta.fg;
     ctx.font = font(12, 700);
-    centerText(ctx, getShiftShort(entry.shiftType), x, layout.colDayW, y, layout.rowH);
+    centerText(ctx, shiftShort(entry.shiftType, customShifts), x, layout.colDayW, y, layout.rowH);
   });
 
   const shouldRest = stat?.shouldRest ?? 0;
@@ -304,11 +317,10 @@ function drawStatsRows(ctx: Ctx2D, stats: readonly DailyStat[], layout: TableLay
   });
 }
 
-/** 图例：11 个色块自动换行 */
-function drawLegend(ctx: Ctx2D, layout: TableLayout): void {
+/** 图例：内置 + 自定义色块自动换行 */
+function drawLegend(ctx: Ctx2D, layout: TableLayout, customShifts: readonly ShiftDefinition[]): void {
   const perRow = Math.max(1, Math.floor((layout.width - layout.padding * 2) / LEGEND_ITEM_W));
-  SHIFT_ORDER.forEach((shift, index) => {
-    const meta = SHIFT_METAS[shift];
+  allShiftMetas(customShifts).forEach((meta, index) => {
     const x = layout.padding + (index % perRow) * LEGEND_ITEM_W;
     const y = layout.legendY + Math.floor(index / perRow) * layout.legendRowH;
     ctx.fillStyle = meta.bg;
@@ -374,10 +386,11 @@ export function drawScheduleTable(ctx: Ctx2D, params: PngTableParams, layout: Ta
       layout,
       dates,
       params.schedule,
+      params.customShifts,
       layout.bodyY + index * layout.rowH,
     );
   });
   drawStatsRows(ctx, params.dailyStats, layout);
-  drawLegend(ctx, layout);
+  drawLegend(ctx, layout, params.customShifts);
   drawGrid(ctx, layout);
 }

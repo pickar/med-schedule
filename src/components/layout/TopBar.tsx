@@ -80,6 +80,10 @@ export function TopBar(): React.ReactElement {
     dispatch({ type: 'ui/patch', payload: { shiftCycleOpen: true, shiftCycleDoctorId: null } });
   }, [dispatch]);
 
+  const handleOpenShiftManager = useCallback((): void => {
+    dispatch({ type: 'ui/patch', payload: { activeDrawer: 'shiftManager' } });
+  }, [dispatch]);
+
   const handleUndo = useCallback((): void => {
     dispatch({ type: 'history/undo' });
   }, [dispatch]);
@@ -109,6 +113,7 @@ export function TopBar(): React.ReactElement {
       schedule: selectMonthSchedule(snapshot, month),
       dailyStats: data.dailyStats,
       doctorStatsById: data.doctorStatsById,
+      customShifts: snapshot.customShifts,
     };
   }, [toast]);
 
@@ -142,6 +147,7 @@ export function TopBar(): React.ReactElement {
       schedule: input.schedule,
       dailyStats: input.dailyStats,
       doctorStatsById: input.doctorStatsById,
+      customShifts: input.customShifts,
     })
       .then((fileName) => {
         toast.show({ tone: 'success', message: TEXTS.exportSuccess(fileName) });
@@ -198,6 +204,7 @@ export function TopBar(): React.ReactElement {
             onExportPng={handleExportPng}
             onPrint={handlePrint}
             onOpenShiftCycle={handleOpenShiftCycle}
+            onOpenShiftManager={handleOpenShiftManager}
             onRetrySave={retrySave}
           />
         </div>
@@ -251,6 +258,15 @@ export function TopBar(): React.ReactElement {
             onClick={handleOpenRules}
           >
             {TEXTS.rulesButton}
+          </Button>
+
+          <Button
+            variant="secondary"
+            icon="layers"
+            active={state.ui.activeDrawer === 'shiftManager'}
+            onClick={handleOpenShiftManager}
+          >
+            {TEXTS.shiftManagerButton}
           </Button>
 
           <GenerateFlow />

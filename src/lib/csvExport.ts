@@ -11,11 +11,14 @@
  *
  * 表体结构与屏幕上的表格保持一致，导出的东西和看到的东西必须能对上：
  * 标题 / 表头（日 + 星期两行）/ 医生行（含应休实休）/ 每日班次统计行。
+ *
+ * 自定义班次：逐日简写走 `shiftShort(id, customShifts)`（统一解析器），
+ * 统计行仍只列内置 11 种（设计 §1.4：自定义不单列）。
  */
 
-import type { Doctor, MonthSchedule, Rules } from '../types/domain';
+import type { Doctor, MonthSchedule, Rules, ShiftDefinition } from '../types/domain';
 import type { DailyStat, DoctorStat } from '../core/stats';
-import { SHIFT_METAS, SHIFT_ORDER, getShiftShort } from '../constants/shifts';
+import { SHIFT_METAS, SHIFT_ORDER, shiftShort } from '../constants/shifts';
 import { TITLE_SHORT, WEEKDAY_NAMES } from '../constants/palette';
 import { TEXTS, csvFileName, scheduleTitle } from '../constants/texts';
 import { listMonthDates, parseDateKey } from './date';
@@ -30,6 +33,8 @@ export interface CsvExportParams {
   /** 与 `listMonthDates(month)` 同序等长 */
   dailyStats: readonly DailyStat[];
   doctorStatsById: Record<string, DoctorStat>;
+  /** 自定义班次定义（custom-aware 简写用） */
+  customShifts: readonly ShiftDefinition[];
 }
 
 /** 行尾：Excel 各版本都认这个 */
@@ -59,12 +64,17 @@ function padTail(cells: string[], total: number): string[] {
 }
 
 /** 取某医生某天的班次简写；未排班返回空串而不是「-」，Excel 里空格更干净 */
-function shiftShortAt(schedule: MonthSchedule, date: string, doctorId: string): string {
+function shiftShortAt(
+  schedule: MonthSchedule,
+  date: string,
+  doctorId: string,
+  customShifts: readonly ShiftDefinition[],
+): string {
   const entry = schedule[date]?.[doctorId];
   if (!entry) {
     return '';
   }
-  return getShiftShort(entry.shiftType);
+  return shiftShort(entry.shiftType, customShifts);
 }
 
 /**
@@ -72,7 +82,7 @@ function shiftShortAt(schedule: MonthSchedule, date: string, doctorId: string): 
  * 独立导出是为了让烟测能直接断言内容，而不必去 mock 下载链路。
  */
 export function buildScheduleCsv(params: CsvExportParams): string {
-  const { month, rules, doctors, schedule, dailyStats, doctorStatsById } = params;
+  const { month, rules, doctors, schedule, dailyStats, doctorStatsById, customShifts } = params;
   const dates = listMonthDates(month);
   // 医生 + 职称 + N 天 + 应休 + 实休
   const columnCount = 2 + dates.length + 2;
@@ -104,7 +114,7 @@ export function buildScheduleCsv(params: CsvExportParams): string {
     rows.push([
       doctor.name,
       TITLE_SHORT[doctor.title] ?? doctor.title,
-      ...dates.map((date) => shiftShortAt(schedule, date, doctor.id)),
+      ...dates.map((date) => shiftShortAt(schedule, date, doctor.id, customShifts)),
       stat ? String(stat.shouldRest) : String(rules.restDaysPerMonth),
       stat ? String(stat.actualRest) : '0',
     ]);

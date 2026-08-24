@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import type { ShiftType } from '../../types/domain';
+import type { ShiftId } from '../../types/domain';
 import type { ValidationResult } from '../../types/validation';
 import { emptyValidationResult } from '../../types/validation';
 import type { DailyStat, DoctorStat } from '../../core/stats';
@@ -68,7 +68,7 @@ export function MainArea({ a11y }: MainAreaProps): React.ReactElement {
   const rows = useDoctorRows({ dates, doctors: state.doctors, schedule, validation });
 
   const handleSetCell = useCallback(
-    (date: string, doctorId: string, shiftType: ShiftType | null): void => {
+    (date: string, doctorId: string, shiftType: ShiftId | null): void => {
       dispatch({ type: 'schedule/setCell', payload: { date, doctorId, shiftType, manual: true } });
     },
     [dispatch],
@@ -121,6 +121,7 @@ export function MainArea({ a11y }: MainAreaProps): React.ReactElement {
           hasSchedule={hasSchedule}
           statsExpanded={statsExpanded}
           legendExpanded={legendExpanded}
+          customShifts={state.customShifts}
           highlightCell={state.ui.highlightCell}
           highlightDoctorId={state.ui.highlightDoctorId}
           stale={stale}

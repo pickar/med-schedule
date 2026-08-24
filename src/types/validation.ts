@@ -5,7 +5,7 @@
  * 三套索引（byCell / byStatCell / byDoctor）保证 UI 查询恒为 O(1)。
  */
 
-import type { ShiftType } from './domain';
+import type { ShiftId } from './domain';
 
 export type ViolationType =
   | 'belowMin' // ① 某日某班次人数 < min
@@ -32,7 +32,7 @@ export interface Violation {
   /** 'YYYY-MM-DD' */
   date?: string;
   doctorId?: string;
-  shiftType?: ShiftType;
+  shiftType?: ShiftId;
 }
 
 export interface ValidationResult {
@@ -65,6 +65,6 @@ export function cellKey(date: string, doctorId: string): string {
 }
 
 /** 统计格索引 key 生成器 */
-export function statCellKey(date: string, shiftType: ShiftType): string {
+export function statCellKey(date: string, shiftType: ShiftId): string {
   return `${date}|${shiftType}`;
 }

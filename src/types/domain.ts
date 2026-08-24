@@ -179,5 +179,5 @@ export interface Diagnostic {
   message: string;
   date?: string;
   doctorId?: string;
-  shiftType?: ShiftType;
+  shiftType?: ShiftId;
 }

@@ -146,6 +146,7 @@ export function selectDerivedParams(state: AppState): DerivedParams {
     schedule: selectMonthSchedule(state, month),
     doctors: state.doctors,
     rules: state.rules,
+    customShifts: state.customShifts,
   };
 }
 

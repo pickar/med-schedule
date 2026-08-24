@@ -29,7 +29,7 @@ const MAX_CANVAS_EDGE = 16384;
  */
 export async function exportSchedulePng(params: PngTableParams): Promise<string> {
   const dayCount = listMonthDates(params.month).length;
-  const layout = computeTableLayout(dayCount, params.doctors.length);
+  const layout = computeTableLayout(dayCount, params.doctors.length, params.customShifts);
 
   const pixelW = Math.round(layout.width * PNG_SCALE);
   const pixelH = Math.round(layout.height * PNG_SCALE);

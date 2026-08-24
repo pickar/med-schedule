@@ -13,10 +13,9 @@
  */
 
 import { memo, useCallback, useRef } from 'react';
-import type { CSSProperties } from 'react';
-import type { ScheduleEntry } from '../../types/domain';
+import type { ScheduleEntry, ShiftDefinition } from '../../types/domain';
 import type { Severity } from '../../types/validation';
-import { getShiftMeta } from '../../constants/shifts';
+import { resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { formatMD } from '../../lib/date';
 import { Icon } from '../ui/Icons';
@@ -38,6 +37,8 @@ export interface ShiftCellProps {
   isLeave: boolean;
   /** 洞察面板「定位」过来的目标格 */
   isHighlighted: boolean;
+  /** 自定义班次定义（解析显示信息用），引用稳定 */
+  customShifts: readonly ShiftDefinition[];
   onPick: CellPickHandler;
 }
 
@@ -53,6 +54,7 @@ function ShiftCellBase(props: ShiftCellProps): React.ReactElement {
     isToday,
     isLeave,
     isHighlighted,
+    customShifts,
     onPick,
   } = props;
 
@@ -64,7 +66,7 @@ function ShiftCellBase(props: ShiftCellProps): React.ReactElement {
   }, [onPick, date, doctorId]);
 
   const shiftType = entry?.shiftType;
-  const meta = shiftType ? getShiftMeta(shiftType) : null;
+  const meta = shiftType ? resolveShiftMeta(shiftType, customShifts) : null;
 
   const classes = ['cell'];
   if (meta === null) {
@@ -86,13 +88,9 @@ function ShiftCellBase(props: ShiftCellProps): React.ReactElement {
     classes.push('is-leave');
   }
 
-  // 班次配色通过局部自定义属性下发，样式表只认 --cell-bg / --cell-fg 两个入口
-  const style = shiftType
-    ? ({
-        '--cell-bg': `var(--shift-${shiftType}-bg)`,
-        '--cell-fg': `var(--shift-${shiftType}-fg)`,
-      } as CSSProperties)
-    : undefined;
+  // 班次配色通过局部自定义属性下发，样式表只认 --cell-bg / --cell-fg 两个入口。
+  // 内置走 CSS 变量（--shift-${key}-bg），自定义走字面色，由 shiftCellStyle 统一决定。
+  const style = shiftType && meta ? shiftCellStyle(meta) : undefined;
 
   const notes: string[] = [meta ? meta.label : TEXTS.cellEmptyMark];
   if (entry?.isRotation) {

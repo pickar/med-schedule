@@ -8,7 +8,7 @@
  * 建议属于洞察面板的职责，校验器只陈述事实。
  */
 
-import type { ShiftType } from '../../types/domain';
+import type { ShiftId } from '../../types/domain';
 import type { Severity, ViolationType } from '../../types/validation';
 import { getShiftLabel } from '../../constants/shifts';
 import { formatMD } from '../../lib/date';
@@ -27,12 +27,12 @@ export const VIOLATION_SEVERITY: Record<ViolationType, Severity> = {
 };
 
 /** ① `{M}/{D} {班次} {c}/{min} 人，低于下限` */
-export function belowMinMessage(date: string, shiftType: ShiftType, actual: number, min: number): string {
+export function belowMinMessage(date: string, shiftType: ShiftId, actual: number, min: number): string {
   return `${formatMD(date)} ${getShiftLabel(shiftType)} ${actual}/${min} 人，低于下限`;
 }
 
 /** ② `{M}/{D} {班次} {c} 人，超出上限 {max}` */
-export function aboveMaxMessage(date: string, shiftType: ShiftType, actual: number, max: number): string {
+export function aboveMaxMessage(date: string, shiftType: ShiftId, actual: number, max: number): string {
   return `${formatMD(date)} ${getShiftLabel(shiftType)} ${actual} 人，超出上限 ${max}`;
 }
 
@@ -57,7 +57,7 @@ export function constraintNoNightMessage(name: string, date: string): string {
 }
 
 /** ⑤c `{姓名} 周末不上班，{M}/{D} 排了{班次}` */
-export function constraintWeekendMessage(name: string, date: string, shiftType: ShiftType): string {
+export function constraintWeekendMessage(name: string, date: string, shiftType: ShiftId): string {
   return `${name} 周末不上班，${formatMD(date)} 排了${getShiftLabel(shiftType)}`;
 }
 
@@ -65,7 +65,7 @@ export function constraintWeekendMessage(name: string, date: string, shiftType: 
 export function leaveConflictMessage(
   name: string,
   date: string,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
   note?: string,
 ): string {
   const noteText = note ? `（${note}）` : '';

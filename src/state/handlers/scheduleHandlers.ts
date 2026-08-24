@@ -8,7 +8,7 @@
  *    留空壳会让「本月是否有排班」这类判断到处需要额外过滤。
  */
 
-import type { DaySchedule, MonthSchedule, ScheduleEntry, ShiftType } from '../../types/domain';
+import type { DaySchedule, MonthSchedule, ScheduleEntry, ShiftId } from '../../types/domain';
 import type { AppState } from '../../types/state';
 import { monthOfDate } from '../../lib/date';
 import type { DayOutcome, ShiftCyclePlan } from '../../core/shiftCycle';
@@ -53,7 +53,7 @@ export function setCell(
   state: AppState,
   date: string,
   doctorId: string,
-  shiftType: ShiftType | null,
+  shiftType: ShiftId | null,
   manual = true,
 ): AppState {
   const month = monthOfDate(date);
@@ -208,7 +208,7 @@ export function applyShiftCycle(
   state: AppState,
   payload: {
     doctorId: string;
-    sequence: ShiftType[];
+    sequence: ShiftId[];
     startDate: string;
     endDate: string;
     overwrite: boolean;

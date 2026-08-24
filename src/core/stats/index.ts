@@ -58,7 +58,7 @@ export interface DerivedParams {
 export function computeDerived(params: DerivedParams): DerivedData {
   const { month, schedule, doctors, rules, customShifts } = sanitizeParams(params);
 
-  const validation = validateMonth({ month, schedule, doctors, rules });
+  const validation = validateMonth({ month, schedule, doctors, rules, customShifts });
   const dailyStats = computeDailyStats({ month, schedule, rules, customShifts });
   const doctorStats = computeDoctorStats({ month, schedule, doctors, rules, customShifts });
 

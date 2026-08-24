@@ -9,7 +9,7 @@
  *   所以弹窗里看到的预览，就是最终写进表的样子。
  */
 
-import type { LeaveRange, ShiftType } from '../../types/domain';
+import type { LeaveRange } from '../../types/domain';
 import { MAX_CYCLE_DAYS } from './types';
 import type {
   DayAction,
@@ -90,7 +90,7 @@ export function planShiftCycle(input: ShiftCycleInput): ShiftCyclePlan {
   for (let i = 0; i < dates.length; i += 1) {
     const date = dates[i];
     const seqIndex = i % sequence.length;
-    const shiftType: ShiftType = sequence[seqIndex];
+    const shiftType = sequence[seqIndex];
     const existing = schedules[monthOfDate(date)]?.[date]?.[doctorId];
 
     let action: DayAction;

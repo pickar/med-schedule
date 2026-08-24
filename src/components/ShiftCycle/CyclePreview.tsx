@@ -6,9 +6,9 @@
  * 列表限高滚动（见 components.css / overlays.css），便于长区间也不撑破弹窗。
  */
 
-import type { CSSProperties } from 'react';
+import type { ShiftDefinition } from '../../types/domain';
 import type { DayAction, ShiftCyclePlan } from '../../core/shiftCycle';
-import { SHIFT_METAS } from '../../constants/shifts';
+import { resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { formatMD } from '../../lib/date';
 
@@ -22,10 +22,11 @@ const ACTION_LABEL: Record<DayAction, string> = {
 
 export interface CyclePreviewProps {
   plan: ShiftCyclePlan;
+  customShifts: readonly ShiftDefinition[];
 }
 
 export function CyclePreview(props: CyclePreviewProps): React.ReactElement {
-  const { plan } = props;
+  const { plan, customShifts } = props;
 
   if (plan.error !== null) {
     return (
@@ -55,11 +56,8 @@ export function CyclePreview(props: CyclePreviewProps): React.ReactElement {
       ) : (
         <ul className="cycle-preview__list">
           {outcomes.map((outcome) => {
-            const meta = SHIFT_METAS[outcome.shiftType];
-            const style = {
-              '--cell-bg': `var(--shift-${outcome.shiftType}-bg)`,
-              '--cell-fg': `var(--shift-${outcome.shiftType}-fg)`,
-            } as CSSProperties;
+            const meta = resolveShiftMeta(outcome.shiftType, customShifts);
+            const style = shiftCellStyle(meta);
             const isSkip = outcome.action !== 'write' && outcome.action !== 'overwrite';
             return (
               <li

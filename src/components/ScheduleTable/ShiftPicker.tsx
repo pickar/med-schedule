@@ -11,9 +11,8 @@
  */
 
 import { useId } from 'react';
-import type { CSSProperties } from 'react';
-import type { ScheduleEntry, ShiftType } from '../../types/domain';
-import { SHIFT_METAS, SHIFT_ORDER } from '../../constants/shifts';
+import type { ScheduleEntry, ShiftDefinition, ShiftId } from '../../types/domain';
+import { allShiftMetas, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { parseDateKey } from '../../lib/date';
 import { Popover } from '../ui/Popover';
@@ -26,14 +25,16 @@ export interface ShiftPickerProps {
   doctorName: string;
   doctorTitle: string;
   entry?: ScheduleEntry;
+  /** 自定义班次定义（候选项来源） */
+  customShifts: readonly ShiftDefinition[];
   /** 传 null 表示清空该格 */
-  onSelect: (shiftType: ShiftType | null) => void;
+  onSelect: (shiftType: ShiftId | null) => void;
   onToggleLock: () => void;
   onClose: () => void;
 }
 
 export function ShiftPicker(props: ShiftPickerProps): React.ReactElement {
-  const { anchor, date, doctorName, doctorTitle, entry, onSelect, onToggleLock, onClose } = props;
+  const { anchor, date, doctorName, doctorTitle, entry, customShifts, onSelect, onToggleLock, onClose } = props;
   const titleId = useId();
   const { month, day } = parseDateKey(date);
   const current = entry?.shiftType;
@@ -52,22 +53,18 @@ export function ShiftPicker(props: ShiftPickerProps): React.ReactElement {
       </div>
 
       <div className="shift-picker__grid" role="listbox" aria-labelledby={titleId}>
-        {SHIFT_ORDER.map((shift) => {
-          const meta = SHIFT_METAS[shift];
-          const selected = current === shift;
-          const style = {
-            '--cell-bg': `var(--shift-${shift}-bg)`,
-            '--cell-fg': `var(--shift-${shift}-fg)`,
-          } as CSSProperties;
+        {allShiftMetas(customShifts).map((meta) => {
+          const selected = current === meta.key;
+          const style = shiftCellStyle(meta);
           return (
             <button
-              key={shift}
+              key={meta.key}
               type="button"
               role="option"
               aria-selected={selected}
               className={selected ? 'shift-option is-selected' : 'shift-option'}
               style={style}
-              onClick={() => onSelect(shift)}
+              onClick={() => onSelect(meta.key)}
             >
               <span className="shift-option__short">{meta.short}</span>
               <span className="shift-option__label">{meta.label}</span>

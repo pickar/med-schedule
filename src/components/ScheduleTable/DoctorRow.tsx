@@ -10,7 +10,7 @@
 
 import { memo } from 'react';
 import type { CSSProperties } from 'react';
-import type { Doctor } from '../../types/domain';
+import type { Doctor, ShiftDefinition } from '../../types/domain';
 import { TITLE_SHORT } from '../../constants/palette';
 import { TEXTS } from '../../constants/texts';
 import type { CellPickHandler } from './ShiftCell';
@@ -32,6 +32,8 @@ export interface DoctorRowProps {
   highlightDate?: string;
   /** 整行高亮（洞察面板按医生定位） */
   isHighlightedRow: boolean;
+  /** 自定义班次定义（透传给 ShiftCell） */
+  customShifts: readonly ShiftDefinition[];
   onPick: CellPickHandler;
 }
 
@@ -48,6 +50,7 @@ function DoctorRowBase(props: DoctorRowProps): React.ReactElement {
     restGap,
     highlightDate,
     isHighlightedRow,
+    customShifts,
     onPick,
   } = props;
 
@@ -80,6 +83,7 @@ function DoctorRowBase(props: DoctorRowProps): React.ReactElement {
           isToday={date === todayDate}
           isLeave={row.leaves[index]}
           isHighlighted={date === highlightDate}
+          customShifts={customShifts}
           onPick={onPick}
         />
       ))}

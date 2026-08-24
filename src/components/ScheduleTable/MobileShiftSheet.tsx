@@ -6,10 +6,9 @@
  */
 
 import { useEffect } from 'react';
-import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import type { ScheduleEntry, ShiftType } from '../../types/domain';
-import { SHIFT_METAS, SHIFT_ORDER } from '../../constants/shifts';
+import type { ScheduleEntry, ShiftDefinition, ShiftId } from '../../types/domain';
+import { allShiftMetas, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { parseDateKey } from '../../lib/date';
 import { Icon } from '../ui/Icons';
@@ -21,8 +20,10 @@ export interface MobileShiftSheetProps {
   doctorName: string;
   doctorTitle: string;
   entry?: ScheduleEntry;
+  /** 自定义班次定义（候选项来源） */
+  customShifts: readonly ShiftDefinition[];
   /** 选中某班次 */
-  onSelect: (shiftType: ShiftType) => void;
+  onSelect: (shiftType: ShiftId) => void;
   /** 清空该格 */
   onClear: () => void;
   onToggleLock: () => void;
@@ -30,7 +31,8 @@ export interface MobileShiftSheetProps {
 }
 
 export function MobileShiftSheet(props: MobileShiftSheetProps): React.ReactElement | null {
-  const { open, date, doctorName, doctorTitle, entry, onSelect, onClear, onToggleLock, onClose } = props;
+  const { open, date, doctorName, doctorTitle, entry, customShifts, onSelect, onClear, onToggleLock, onClose } =
+    props;
 
   useEffect(() => {
     if (!open) {
@@ -71,22 +73,18 @@ export function MobileShiftSheet(props: MobileShiftSheetProps): React.ReactEleme
         </div>
 
         <div className="shift-sheet__grid">
-          {SHIFT_ORDER.map((shift) => {
-            const meta = SHIFT_METAS[shift];
-            const selected = current === shift;
-            const style = {
-              '--cell-bg': `var(--shift-${shift}-bg)`,
-              '--cell-fg': `var(--shift-${shift}-fg)`,
-            } as CSSProperties;
+          {allShiftMetas(customShifts).map((meta) => {
+            const selected = current === meta.key;
+            const style = shiftCellStyle(meta);
             return (
               <button
-                key={shift}
+                key={meta.key}
                 type="button"
                 role="option"
                 aria-selected={selected}
                 className={selected ? 'shift-option is-selected' : 'shift-option'}
                 style={style}
-                onClick={() => onSelect(shift)}
+                onClick={() => onSelect(meta.key)}
               >
                 <span className="shift-option__short">{meta.short}</span>
                 <span className="shift-option__label">{meta.label}</span>

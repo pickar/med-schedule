@@ -10,8 +10,8 @@
  * 表格不会出现「幽灵班次」，且整次删除 + 置空可被撤销栈整体回退。
  */
 
+import type { AppState } from '../../types/state';
 import type {
-  AppState,
   DaySchedule,
   MonthSchedule,
   SchedulesByMonth,

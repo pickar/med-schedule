@@ -23,6 +23,7 @@ import type { RawBundle } from './storageSchema';
 import {
   isObject,
   migrateBundle,
+  normalizeCustomShifts,
   normalizeDoctors,
   normalizeMonthSchedule,
   normalizeRules,
@@ -59,6 +60,7 @@ export function buildBackupJson(snapshot: DataSnapshot, now: Date = new Date()):
       doctors: snapshot.doctors,
       rules: snapshot.rules,
       schedules: snapshot.schedules,
+      customShifts: snapshot.customShifts,
     },
   };
   return JSON.stringify(file, null, 2);
@@ -102,6 +104,7 @@ export function parseBackup(text: string): RestoreResult {
     doctors: payload.doctors,
     rules: payload.rules,
     schedules: rawSchedules,
+    customShifts: payload.customShifts,
   };
 
   try {
@@ -129,6 +132,7 @@ export function parseBackup(text: string): RestoreResult {
         doctors,
         rules: normalizeRules(bundle.rules),
         schedules,
+        customShifts: normalizeCustomShifts(bundle.customShifts),
       },
       migratedFrom,
     };

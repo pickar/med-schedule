@@ -8,20 +8,20 @@
  */
 
 import { useState } from 'react';
-import type { CSSProperties } from 'react';
-import type { ShiftType } from '../../types/domain';
-import { SHIFT_METAS, SHIFT_ORDER } from '../../constants/shifts';
+import type { ShiftDefinition, ShiftId } from '../../types/domain';
+import { allShiftMetas, resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { Button, IconButton } from '../ui/Button';
 
 export interface SequenceEditorProps {
-  sequence: ShiftType[];
-  onChange: (next: ShiftType[]) => void;
+  sequence: ShiftId[];
+  customShifts: readonly ShiftDefinition[];
+  onChange: (next: ShiftId[]) => void;
 }
 
 export function SequenceEditor(props: SequenceEditorProps): React.ReactElement {
-  const { sequence, onChange } = props;
-  const [appendKey, setAppendKey] = useState<ShiftType>('dayShift');
+  const { sequence, customShifts, onChange } = props;
+  const [appendKey, setAppendKey] = useState<ShiftId>('dayShift');
 
   const move = (index: number, delta: number): void => {
     const target = index + delta;
@@ -49,11 +49,8 @@ export function SequenceEditor(props: SequenceEditorProps): React.ReactElement {
       ) : (
         <ul className="sequence-chips">
           {sequence.map((shift, index) => {
-            const meta = SHIFT_METAS[shift];
-            const style = {
-              '--cell-bg': `var(--shift-${shift}-bg)`,
-              '--cell-fg': `var(--shift-${shift}-fg)`,
-            } as CSSProperties;
+            const meta = resolveShiftMeta(shift, customShifts);
+            const style = shiftCellStyle(meta);
             return (
               <li key={`${shift}-${index}`} className="sequence-chip" style={style}>
                 <span className="sequence-chip__index">{index + 1}</span>
@@ -95,11 +92,11 @@ export function SequenceEditor(props: SequenceEditorProps): React.ReactElement {
           className="select-input"
           value={appendKey}
           aria-label={TEXTS.shiftCycleAddShift}
-          onChange={(event) => setAppendKey(event.target.value as ShiftType)}
+          onChange={(event) => setAppendKey(event.target.value as ShiftId)}
         >
-          {SHIFT_ORDER.map((shift) => (
-            <option key={shift} value={shift}>
-              {SHIFT_METAS[shift].label}
+          {allShiftMetas(customShifts).map((meta) => (
+            <option key={meta.key} value={meta.key}>
+              {meta.label}
             </option>
           ))}
         </select>

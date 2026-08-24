@@ -5,10 +5,9 @@
  * 那是 `index.ts` 的职责。这样每类检测都能被单独测试。
  */
 
-import type { Doctor, MonthSchedule, Rules, ShiftType } from '../../types/domain';
+import type { Doctor, MonthSchedule, Rules, ShiftDefinition, ShiftId } from '../../types/domain';
 import type { Violation, ViolationType } from '../../types/validation';
-import { isClinicShift, isWorkShift } from '../../constants/shifts';
-import { RANGED_SHIFTS } from '../../constants/shifts';
+import { isClinicShift, isWorkShiftId, RANGED_SHIFTS } from '../../constants/shifts';
 import { expandDateRange, getWeekday, monthOfDate } from '../../lib/date';
 import { defaultConstraints } from '../../lib/dataShape';
 import {
@@ -38,12 +37,14 @@ export interface CheckInput {
   rules: Rules;
   /** `${date}|${doctorId}` -> 请假备注（无备注时为空串） */
   leaveMap: Map<string, string>;
+  /** 自定义班次定义（custom-aware 校验用） */
+  customShifts: readonly ShiftDefinition[];
 }
 
 /** 构造 Violation，id 格式统一在此生成 */
 export function makeViolation(
   type: ViolationType,
-  parts: { date?: string; doctorId?: string; shiftType?: ShiftType },
+  parts: { date?: string; doctorId?: string; shiftType?: ShiftId },
   message: string,
   detail?: string,
 ): Violation {
@@ -82,8 +83,8 @@ export function buildLeaveMap(doctors: Doctor[], month: string): Map<string, str
 }
 
 /** 统计某日各班次人数 */
-export function countByShift(schedule: MonthSchedule, date: string): Map<ShiftType, number> {
-  const counts = new Map<ShiftType, number>();
+export function countByShift(schedule: MonthSchedule, date: string): Map<ShiftId, number> {
+  const counts = new Map<ShiftId, number>();
   const day = schedule?.[date];
   if (!day) {
     return counts;
@@ -217,14 +218,14 @@ export function checkDoctorConstraints(input: CheckInput): Violation[] {
       if (constraints.noNightShift && shift === 'nightShift') {
         violations.push(makeViolation('constraintNoNight', coord, constraintNoNightMessage(name, date)));
       }
-      if (constraints.weekendOff && isWeekend && isWorkShift(shift) && !isClinicShift(shift)) {
+      if (constraints.weekendOff && isWeekend && isWorkShiftId(shift, input.customShifts) && !isClinicShift(shift)) {
         violations.push(
           makeViolation('constraintWeekend', coord, constraintWeekendMessage(name, date, shift), WEEKEND_DETAIL),
         );
       }
 
       const leaveKey = `${date}|${entry.doctorId}`;
-      if (isWorkShift(shift) && input.leaveMap.has(leaveKey)) {
+      if (isWorkShiftId(shift, input.customShifts) && input.leaveMap.has(leaveKey)) {
         const note = input.leaveMap.get(leaveKey);
         violations.push(
           makeViolation('leaveConflict', coord, leaveConflictMessage(name, date, shift, note || undefined)),

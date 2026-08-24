@@ -6,7 +6,7 @@
  * 任何绕过这两个函数的直接改写都会导致状态撕裂。
  */
 
-import type { Diagnostic, Doctor, MonthSchedule, Rules, ScheduleEntry, ShiftType } from '../../types/domain';
+import type { Diagnostic, Doctor, MonthSchedule, Rules, ScheduleEntry, ShiftId } from '../../types/domain';
 import { getShiftLabel, isShiftType } from '../../constants/shifts';
 import { expandDateRange, getDaysInMonth, getWeekday, listMonthDates, monthOfDate } from '../../lib/date';
 import type { DayInfo, GenContext, WorkloadScore } from './types';
@@ -159,7 +159,7 @@ export function assign(
   ctx: GenContext,
   date: string,
   doctorId: string,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
   options: AssignOptions = {},
 ): boolean {
   if (ctx.lockedSet.has(coordKey(date, doctorId))) {
@@ -189,7 +189,7 @@ export function assign(
  * 撤销一个班次。锁定格不可撤销。
  * @returns 被撤销的班次；未撤销时返回 null
  */
-export function unassign(ctx: GenContext, date: string, doctorId: string): ShiftType | null {
+export function unassign(ctx: GenContext, date: string, doctorId: string): ShiftId | null {
   if (ctx.lockedSet.has(coordKey(date, doctorId))) {
     return null;
   }
@@ -208,7 +208,7 @@ export function unassign(ctx: GenContext, date: string, doctorId: string): Shift
 }
 
 /** 统计某日某班次的实际人数 */
-export function countShiftOnDay(ctx: GenContext, date: string, shiftType: ShiftType): number {
+export function countShiftOnDay(ctx: GenContext, date: string, shiftType: ShiftId): number {
   const dayMap = ctx.assigned.get(date);
   if (!dayMap) {
     return 0;
@@ -241,7 +241,7 @@ export function addBelowMinDiagnostic(
   ctx: GenContext,
   stage: string,
   date: string,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
   actual: number,
   min: number,
 ): void {

@@ -9,8 +9,8 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import type { Doctor, ScheduleEntry, ShiftType } from '../../types/domain';
-import { SHIFT_METAS, SHIFT_ORDER } from '../../constants/shifts';
+import type { Doctor, ScheduleEntry, ShiftDefinition, ShiftId } from '../../types/domain';
+import { allShiftMetas, resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { parseDateKey } from '../../lib/date';
 import { Icon } from '../ui/Icons';
@@ -22,8 +22,10 @@ export interface DayShiftSheetProps {
   doctors: Doctor[];
   monthSchedule: Record<string, Record<string, ScheduleEntry>>;
   isOnLeave: (doctor: Doctor, date: string) => boolean;
+  /** 自定义班次定义（候选项来源） */
+  customShifts: readonly ShiftDefinition[];
   /** 选中某医生 + 某班次 */
-  onSelect: (doctorId: string, shiftType: ShiftType) => void;
+  onSelect: (doctorId: string, shiftType: ShiftId) => void;
   /** 清空该医生当天格子 */
   onClear: (doctorId: string) => void;
   onToggleLock: (doctorId: string) => void;
@@ -31,7 +33,8 @@ export interface DayShiftSheetProps {
 }
 
 export function DayShiftSheet(props: DayShiftSheetProps): React.ReactElement | null {
-  const { open, date, doctors, monthSchedule, isOnLeave, onSelect, onClear, onToggleLock, onClose } = props;
+  const { open, date, doctors, monthSchedule, isOnLeave, customShifts, onSelect, onClear, onToggleLock, onClose } =
+    props;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -85,15 +88,10 @@ export function DayShiftSheet(props: DayShiftSheetProps): React.ReactElement | n
         <div className="daysheet__doctors" role="tablist" aria-label={TEXTS.doctorPanelTitle}>
           {doctors.map((doctor) => {
             const e = dayMap[doctor.id];
-            const meta = e?.shiftType ? SHIFT_METAS[e.shiftType] : null;
+            const meta = e?.shiftType ? resolveShiftMeta(e.shiftType, customShifts) : null;
             const onLeave = isOnLeave(doctor, date);
             const active = doctor.id === selectedId;
-            const style: CSSProperties | undefined = meta
-              ? ({
-                  '--cell-bg': `var(--shift-${meta.key}-bg)`,
-                  '--cell-fg': `var(--shift-${meta.key}-fg)`,
-                } as CSSProperties)
-              : undefined;
+            const style: CSSProperties | undefined = meta ? shiftCellStyle(meta) : undefined;
             return (
               <button
                 key={doctor.id}
@@ -115,22 +113,18 @@ export function DayShiftSheet(props: DayShiftSheetProps): React.ReactElement | n
 
         {/* 班次网格（复用 .shift-option 视觉） */}
         <div className="shift-sheet__grid">
-          {SHIFT_ORDER.map((shift) => {
-            const meta = SHIFT_METAS[shift];
-            const selectedShift = current === shift;
-            const style = {
-              '--cell-bg': `var(--shift-${shift}-bg)`,
-              '--cell-fg': `var(--shift-${shift}-fg)`,
-            } as CSSProperties;
+          {allShiftMetas(customShifts).map((meta) => {
+            const selectedShift = current === meta.key;
+            const style = shiftCellStyle(meta);
             return (
               <button
-                key={shift}
+                key={meta.key}
                 type="button"
                 role="option"
                 aria-selected={selectedShift}
                 className={selectedShift ? 'shift-option is-selected' : 'shift-option'}
                 style={style}
-                onClick={() => selectedId && onSelect(selectedId, shift)}
+                onClick={() => selectedId && onSelect(selectedId, meta.key)}
               >
                 <span className="shift-option__short">{meta.short}</span>
                 <span className="shift-option__label">{meta.label}</span>

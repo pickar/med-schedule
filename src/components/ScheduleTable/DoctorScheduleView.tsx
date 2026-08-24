@@ -9,10 +9,10 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, TouchEvent as ReactTouchEvent } from 'react';
-import type { ScheduleEntry, ShiftType } from '../../types/domain';
+import type { TouchEvent as ReactTouchEvent } from 'react';
+import type { ScheduleEntry, ShiftId } from '../../types/domain';
 import { useAppDispatch, useAppState } from '../../state/contexts';
-import { SHIFT_METAS } from '../../constants/shifts';
+import { isWorkShiftId, resolveShiftMeta, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS, WEEKDAY_LABELS } from '../../constants/texts';
 import { formatMD, getWeekday, isToday, listMonthDates } from '../../lib/date';
 import { isOnLeave } from '../DoctorPanel/DoctorPanel';
@@ -73,7 +73,7 @@ export function DoctorScheduleView(): React.ReactElement {
         if (!entry) {
           continue;
         }
-        if (SHIFT_METAS[entry.shiftType].isWork) {
+        if (isWorkShiftId(entry.shiftType, state.customShifts)) {
           work += 1;
         } else {
           rest += 1;
@@ -81,7 +81,7 @@ export function DoctorScheduleView(): React.ReactElement {
       }
     }
     return { work, rest };
-  }, [dates, monthSchedule, selectedId]);
+  }, [dates, monthSchedule, selectedId, state.customShifts]);
 
   // 底部面板状态
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -92,7 +92,7 @@ export function DoctorScheduleView(): React.ReactElement {
   const closeSheet = useCallback(() => setActiveDate(null), []);
 
   const handleSelect = useCallback(
-    (shiftType: ShiftType) => {
+    (shiftType: ShiftId) => {
       if (!activeDate || !selectedId) {
         return;
       }
@@ -198,7 +198,7 @@ export function DoctorScheduleView(): React.ReactElement {
         {dates.map((date) => {
           const weekday = getWeekday(date);
           const entry = selectedDoctor ? monthSchedule[date]?.[selectedDoctor.id] : undefined;
-          const meta = entry ? SHIFT_METAS[entry.shiftType] : null;
+          const meta = entry ? resolveShiftMeta(entry.shiftType, state.customShifts) : null;
           const weekend = weekday === 0 || weekday === 6;
           const today = isToday(date);
           const onLeave = selectedDoctor ? isOnLeave(selectedDoctor, date) : false;
@@ -223,15 +223,7 @@ export function DoctorScheduleView(): React.ReactElement {
                 </span>
                 <span className="mdsv__day-shift">
                   {meta ? (
-                    <span
-                      className="mdsv__shift-block"
-                      style={
-                        {
-                          '--cell-bg': `var(--shift-${meta.key}-bg)`,
-                          '--cell-fg': `var(--shift-${meta.key}-fg)`,
-                        } as CSSProperties
-                      }
-                    >
+                    <span className="mdsv__shift-block" style={shiftCellStyle(meta)}>
                       <span className="mdsv__shift-short">{meta.short}</span>
                       <span className="mdsv__shift-label">{meta.label}</span>
                     </span>
@@ -261,6 +253,7 @@ export function DoctorScheduleView(): React.ReactElement {
         doctorName={selectedDoctor?.name ?? ''}
         doctorTitle={selectedDoctor?.title ?? ''}
         entry={activeEntry}
+        customShifts={state.customShifts}
         onSelect={handleSelect}
         onClear={handleClear}
         onToggleLock={handleToggleLock}

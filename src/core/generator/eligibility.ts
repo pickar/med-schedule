@@ -9,7 +9,7 @@
  *   占位 / 锁定 / 请假 / 禁白 / 禁夜 / 周末不上班 / 禁连夜 / 夜班次日可写性 / 非自动班次
  */
 
-import type { Doctor, ShiftType } from '../../types/domain';
+import type { Doctor, ShiftId } from '../../types/domain';
 import { isAutoAssignable, isClinicShift, isWorkShift } from '../../constants/shifts';
 import type { DayInfo, EligibilityResult, GenContext } from './types';
 import { ELIGIBLE, coordKey, ineligible } from './types';
@@ -30,7 +30,7 @@ export function isOccupied(ctx: GenContext, date: string, doctorId: string): boo
 }
 
 /** 取某医生某日已落位的班次；无安排返回 null */
-export function getAssignedShift(ctx: GenContext, date: string, doctorId: string): ShiftType | null {
+export function getAssignedShift(ctx: GenContext, date: string, doctorId: string): ShiftId | null {
   return ctx.assigned.get(date)?.get(doctorId)?.shiftType ?? null;
 }
 
@@ -44,7 +44,7 @@ export function canAssign(
   ctx: GenContext,
   day: DayInfo,
   doctorId: string,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
   allowOccupied = false,
 ): EligibilityResult {
   const doctor = ctx.doctorMap.get(doctorId);
@@ -96,7 +96,7 @@ export function canAssign(
 function checkDoctorConstraints(
   doctor: Doctor,
   day: DayInfo,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
 ): EligibilityResult | null {
   const { noDayShift, noNightShift, weekendOff } = doctor.constraints;
 
@@ -152,7 +152,7 @@ function checkNightShift(ctx: GenContext, day: DayInfo, doctorId: string): Eligi
 export function eligibleCandidates(
   ctx: GenContext,
   day: DayInfo,
-  shiftType: ShiftType,
+  shiftType: ShiftId,
   pool?: readonly string[],
 ): string[] {
   const ids = pool ?? ctx.doctors.map((d) => d.id);

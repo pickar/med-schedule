@@ -8,7 +8,7 @@
  *    排班，否则用户无法理解「为什么重新生成后变了」，也无法做 A/B 对比。
  */
 
-import type { ShiftType } from '../../types/domain';
+import type { ShiftId } from '../../types/domain';
 import type { FairnessDimension, WorkloadScore } from './types';
 
 /** 创建零分记录 */
@@ -43,7 +43,7 @@ export function burden(s: BurdenInput): number {
  * 把一次班次落位累加进计分。
  * @param delta +1 表示落位，-1 表示撤销（阶段 5/6 会撤销已排班次）
  */
-export function applyShiftToScore(score: WorkloadScore, shiftType: ShiftType, delta: 1 | -1): void {
+export function applyShiftToScore(score: WorkloadScore, shiftType: ShiftId, delta: 1 | -1): void {
   switch (shiftType) {
     case 'nightShift':
       score.nightCount += delta;

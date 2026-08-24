@@ -27,6 +27,7 @@ import { DoctorPanel } from './components/DoctorPanel/DoctorPanel';
 import { DoctorDrawer } from './components/DoctorPanel/DoctorDrawer';
 import { RulesDrawer } from './components/RulesDrawer/RulesDrawer';
 import { ShiftCycleModal } from './components/ShiftCycle/ShiftCycleModal';
+import { ShiftManagerDrawer } from './components/ShiftManager/ShiftManagerDrawer';
 import { TEXTS } from './constants/texts';
 
 export default function App(): React.ReactElement {
@@ -108,6 +109,7 @@ function AppShell(): React.ReactElement {
 
       <DoctorDrawer />
       <RulesDrawer />
+      <ShiftManagerDrawer />
       <ShiftCycleModal />
     </div>
   );

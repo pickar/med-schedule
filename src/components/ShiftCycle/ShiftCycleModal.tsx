@@ -167,7 +167,11 @@ export function ShiftCycleModal(): React.ReactElement {
 
         <div className="field">
           <span className="field__label">{TEXTS.shiftCycleSequenceLabel}</span>
-          <SequenceEditor sequence={draft.sequence} onChange={(sequence) => patch({ sequence })} />
+          <SequenceEditor
+            sequence={draft.sequence}
+            customShifts={state.customShifts}
+            onChange={(sequence) => patch({ sequence })}
+          />
         </div>
 
         <div className="shift-cycle__dates">
@@ -200,7 +204,7 @@ export function ShiftCycleModal(): React.ReactElement {
 
         {errorText !== null && <p className="field__error">{errorText}</p>}
 
-        <CyclePreview plan={plan} />
+        <CyclePreview plan={plan} customShifts={state.customShifts} />
       </div>
     </Modal>
   );

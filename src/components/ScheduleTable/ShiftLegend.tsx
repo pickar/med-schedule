@@ -10,18 +10,20 @@
  */
 
 import { memo } from 'react';
-import type { CSSProperties } from 'react';
-import { SHIFT_METAS, SHIFT_ORDER } from '../../constants/shifts';
+import type { ShiftDefinition } from '../../types/domain';
+import { allShiftMetas, shiftCellStyle } from '../../constants/shifts';
 import { TEXTS } from '../../constants/texts';
 import { Icon } from '../ui/Icons';
 
 export interface ShiftLegendProps {
   expanded: boolean;
+  /** 自定义班次定义（图例候选项来源） */
+  customShifts: readonly ShiftDefinition[];
   onToggle: () => void;
 }
 
 function ShiftLegendBase(props: ShiftLegendProps): React.ReactElement {
-  const { expanded, onToggle } = props;
+  const { expanded, customShifts, onToggle } = props;
 
   return (
     <section className={expanded ? 'legend is-expanded' : 'legend'} aria-label={TEXTS.legendTitle}>
@@ -39,14 +41,10 @@ function ShiftLegendBase(props: ShiftLegendProps): React.ReactElement {
 
       {expanded ? (
         <ul className="legend__list">
-          {SHIFT_ORDER.map((shift) => {
-            const meta = SHIFT_METAS[shift];
-            const style = {
-              '--cell-bg': `var(--shift-${shift}-bg)`,
-              '--cell-fg': `var(--shift-${shift}-fg)`,
-            } as CSSProperties;
+          {allShiftMetas(customShifts).map((meta) => {
+            const style = shiftCellStyle(meta);
             return (
-              <li key={shift} className="legend__item">
+              <li key={meta.key} className="legend__item">
                 <span className="legend__chip" style={style}>
                   {meta.short}
                 </span>

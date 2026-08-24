@@ -38,6 +38,7 @@ export function BackupControls(): React.ReactElement {
       doctors: state.doctors,
       rules: state.rules,
       schedules: state.schedules,
+      customShifts: state.customShifts,
     };
     const fileName = exportBackup(snapshot);
     toast.show({ tone: 'success', message: TEXTS.exportSuccess(fileName) });
