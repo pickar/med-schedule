@@ -325,6 +325,27 @@ export const TEXTS = {
   shiftCycleMoveDown: '下移',
   shiftCycleRemove: '移除',
 
+  // ===== 轮班批量能力（v1.4.0：所有医生 + 所有日期）=====
+  shiftCycleAllDoctors: (n: number): string => `所有医生（${n} 人）`,
+  shiftCycleStartModeLabel: '多医生起始位',
+  shiftCycleStartModeStagger: '依次错开',
+  shiftCycleStartModeAlign: '全部同步',
+  shiftCycleStartModeHint:
+    '错开：第 2 位医生从序列第 2 位起步，同一天各班次都有人；同步：所有人从同一位起步，同一天班次相同',
+  shiftCycleAllDatesLabel: '应用到所有日期',
+  shiftCycleAllDatesHint: (start: string, end: string): string =>
+    `按当前月份自动铺满整年 365 天（${start} – ${end}），不必再手填日期`,
+  shiftCycleAllDatesManualHint: '关闭后可手动指定起止日期',
+  shiftCycleAppliedAll: (n: number, start: string, end: string): string =>
+    `已为 ${n} 位医生设置轮班（${start}–${end}）`,
+  /** 批量时 total 计的是「天数 × 人数」，单位要说成格 */
+  shiftCycleSummaryCells: (n: number): string => `共 ${n} 格`,
+  shiftCycleSummaryEffectiveCells: (n: number): string => `写入 ${n} 格`,
+  shiftCycleSummaryDoctors: (n: number): string => `${n} 位医生`,
+  shiftCycleStartAt: (short: string): string => `起始 ${short}`,
+  shiftCycleExpand: '展开',
+  shiftCycleCollapse: '收起',
+
   // ===== 移动端「医生视角」排班（≤768px 专属）=====
   mdsvPrevDoctor: '上一位',
   mdsvNextDoctor: '下一位',

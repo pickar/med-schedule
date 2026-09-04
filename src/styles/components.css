@@ -316,5 +316,70 @@
   font-size: var(--fs-xs);
 }
 
+/* 「应用到所有日期」勾选后日期控件只读：给出明确的禁用观感，别让人以为还能点 */
+.text-input:disabled {
+  color: var(--text-disabled);
+  background: var(--bg-muted);
+  cursor: not-allowed;
+}
+
+/* 多医生起始位：两个 radio 横排，触摸靶 ≥ 32px */
+.shift-cycle__radios { display: flex; flex-direction: column; gap: var(--sp-2); }
+.shift-cycle__radio-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+.radio-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.radio-inline input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary-600);
+}
+
+/* 批量预览：按医生分组，默认只渲染 N 行摘要（避免人数 × 365 天一次铺开） */
+.cycle-doctor__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-1);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-btn);
+  background: var(--bg-neutral);
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cycle-doctor { background: var(--bg-surface); border-radius: var(--radius-cell); }
+
+.cycle-doctor__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-2);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-cell);
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.cycle-doctor__head:hover { background: var(--bg-muted); }
+.cycle-doctor__caret { width: 12px; color: var(--text-tertiary); }
+.cycle-doctor__name { font-weight: var(--fw-medium); }
+.cycle-doctor__start { color: var(--text-secondary); font-size: var(--fs-xs); }
+.cycle-doctor__toggle { margin-left: auto; color: var(--text-tertiary); font-size: var(--fs-xs); }
+.cycle-doctor__body { padding: 0 var(--sp-2) var(--sp-2); }
+
 /* 医生抽屉 footer 的「设轮班」靠左，与「取消 / 保存」分组 */
 .drawer__footer .shift-cycle-open-btn { margin-right: auto; }

@@ -119,20 +119,6 @@ export function selectShiftCycleDoctor(state: AppState): Doctor | null {
   return selectDoctorById(state, state.ui.shiftCycleDoctorId);
 }
 
-/**
- * 轮班规划所需的「目标」数据束：预选医生 + 全量排班表。
- * 弹窗用它在 useMemo 里实时重算 plan，与 reducer 写入同口径。
- */
-export function selectShiftCycleTargets(state: AppState): {
-  doctor: Doctor | null;
-  schedules: SchedulesByMonth;
-} {
-  return {
-    doctor: selectShiftCycleDoctor(state),
-    schedules: state.schedules,
-  };
-}
-
 // ============ 派生数据入参 ============
 
 /**

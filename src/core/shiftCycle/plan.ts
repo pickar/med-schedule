@@ -14,6 +14,7 @@ import { MAX_CYCLE_DAYS } from './types';
 import type {
   DayAction,
   DayOutcome,
+  DoctorCyclePlan,
   ShiftCycleError,
   ShiftCycleInput,
   ShiftCyclePlan,
@@ -36,7 +37,22 @@ function buildEmptySummary(): ShiftCycleSummary {
 
 /** 构造一份「无 outcomes」的计划（错误分支用） */
 function buildErrorPlan(error: ShiftCycleError): ShiftCyclePlan {
-  return { outcomes: [], summary: buildEmptySummary(), error };
+  return { perDoctor: [], outcomes: [], summary: buildEmptySummary(), error, doctorCount: 0 };
+}
+
+/** 按动作累加计数，同时打进「全体」与「本人」两份汇总 */
+function bump(summary: ShiftCycleSummary, action: DayAction): void {
+  if (action === 'write') {
+    summary.write += 1;
+  } else if (action === 'overwrite') {
+    summary.overwrite += 1;
+  } else if (action === 'skipLocked') {
+    summary.skipLocked += 1;
+  } else if (action === 'skipLeave') {
+    summary.skipLeave += 1;
+  } else {
+    summary.skipOccupied += 1;
+  }
 }
 
 /** date 是否落在任意请假区间内（协同请假跳过） */
@@ -50,22 +66,41 @@ function isOnLeave(date: string, leaves: readonly LeaveRange[]): boolean {
 }
 
 /**
- * 规划一段轮班。
+ * 规划一段轮班（支持 1~N 位医生）。
  *
  * 校验顺序（任一命中即短路返回 error 计划，outcomes 为空）：
- *   1. !doctorId          -> noDoctor
- *   2. sequence.length===0 -> emptySequence
- *   3. 日期非法            -> invalidDate
- *   4. endDate<startDate  -> endBeforeStart（字典序）
- *   5. 展开后天数>上限     -> rangeTooLong
+ *   1. doctorIds 为空          -> noDoctor
+ *   2. sequence.length===0     -> emptySequence
+ *   3. 日期非法                -> invalidDate
+ *   4. endDate<startDate       -> endBeforeStart（字典序）
+ *   5. 展开后天数>上限          -> rangeTooLong
  *
- * 主循环：日历日按 `i % L` 消费序列位（跳过的日子照样消耗序列位，保证日历锚定），
+ * 双层主循环：外层遍历医生（决定起始位），内层遍历日历日。
+ * 日历日按 `(i + startOffset) % L` 消费序列位（跳过的日子照样消耗序列位，保证日历锚定），
  * 逐日判定 write / overwrite / skipLocked / skipLeave / skipOccupied。
+ *
+ * 起始位：
+ *   - `stagger`：第 k 位医生 startOffset = k % L，同一天不同医生落在序列不同位置
+ *   - `align`：所有人 startOffset = 0，同一天班次完全相同
+ *
+ * 请假按医生各自的 leaves 判定——请假是个人属性，批量时绝不能共用一份。
+ *
+ * ⚠️ 复杂度为 O(医生数 × 天数)，「所有医生 + 整年」会跑出数千条 outcome。
+ * 预览组件靠 `perDoctor` 分组折叠来避免一次性渲染这么多 DOM。
  */
 export function planShiftCycle(input: ShiftCycleInput): ShiftCyclePlan {
-  const { doctorId, sequence, startDate, endDate, overwrite, leaves, schedules } = input;
+  const {
+    doctorIds,
+    sequence,
+    startDate,
+    endDate,
+    overwrite,
+    startMode,
+    leavesByDoctor,
+    schedules,
+  } = input;
 
-  if (!doctorId) {
+  if (doctorIds.length === 0) {
     return buildErrorPlan('noDoctor');
   }
   if (sequence.length === 0) {
@@ -83,57 +118,78 @@ export function planShiftCycle(input: ShiftCycleInput): ShiftCyclePlan {
     return buildErrorPlan('rangeTooLong');
   }
 
-  const outcomes: DayOutcome[] = [];
+  const length = sequence.length;
+  const perDoctor: DoctorCyclePlan[] = [];
+  const flat: DayOutcome[] = [];
   const summary = buildEmptySummary();
-  summary.total = dates.length;
+  // total 计的是「格子数」= 天数 × 人数，批量时 UI 会换成对应的文案
+  summary.total = dates.length * doctorIds.length;
 
-  for (let i = 0; i < dates.length; i += 1) {
-    const date = dates[i];
-    const seqIndex = i % sequence.length;
-    const shiftType = sequence[seqIndex];
-    const existing = schedules[monthOfDate(date)]?.[date]?.[doctorId];
+  for (let k = 0; k < doctorIds.length; k += 1) {
+    const doctorId = doctorIds[k];
+    const leaves = leavesByDoctor[doctorId] ?? [];
+    const startOffset = startMode === 'stagger' ? k % length : 0;
 
-    let action: DayAction;
-    if (existing?.locked) {
-      action = 'skipLocked';
-    } else if (isOnLeave(date, leaves)) {
-      action = 'skipLeave';
-    } else if (!existing) {
-      action = 'write';
-    } else if (overwrite) {
-      action = 'overwrite';
-    } else {
-      action = 'skipOccupied';
+    const doctorOutcomes: DayOutcome[] = [];
+    const doctorSummary = buildEmptySummary();
+    doctorSummary.total = dates.length;
+
+    for (let i = 0; i < dates.length; i += 1) {
+      const date = dates[i];
+      const seqIndex = (i + startOffset) % length;
+      const shiftType = sequence[seqIndex];
+      const existing = schedules[monthOfDate(date)]?.[date]?.[doctorId];
+
+      let action: DayAction;
+      if (existing?.locked) {
+        action = 'skipLocked';
+      } else if (isOnLeave(date, leaves)) {
+        action = 'skipLeave';
+      } else if (!existing) {
+        action = 'write';
+      } else if (overwrite) {
+        action = 'overwrite';
+      } else {
+        action = 'skipOccupied';
+      }
+
+      bump(summary, action);
+      bump(doctorSummary, action);
+
+      const outcome: DayOutcome = {
+        doctorId,
+        date,
+        shiftType,
+        seqIndex,
+        action,
+        ...(existing ? { previous: existing.shiftType } : {}),
+      };
+      doctorOutcomes.push(outcome);
+      flat.push(outcome);
     }
 
-    if (action === 'write') {
-      summary.write += 1;
-    } else if (action === 'overwrite') {
-      summary.overwrite += 1;
-    } else if (action === 'skipLocked') {
-      summary.skipLocked += 1;
-    } else if (action === 'skipLeave') {
-      summary.skipLeave += 1;
-    } else {
-      summary.skipOccupied += 1;
-    }
-
-    const outcome: DayOutcome = {
-      date,
-      shiftType,
-      seqIndex,
-      action,
-      ...(existing ? { previous: existing.shiftType } : {}),
-    };
-    outcomes.push(outcome);
+    doctorSummary.effective = doctorSummary.write + doctorSummary.overwrite;
+    perDoctor.push({ doctorId, startOffset, outcomes: doctorOutcomes, summary: doctorSummary });
   }
 
   summary.effective = summary.write + summary.overwrite;
 
-  return { outcomes, summary, error: null };
+  return {
+    perDoctor,
+    outcomes: flat,
+    summary,
+    error: null,
+    doctorCount: doctorIds.length,
+  };
 }
 
-/** 从计划里挑出真正要落库的条目（write | overwrite） */
+/**
+ * 从计划里挑出真正要落库的条目（write | overwrite）。
+ *
+ * 返回的是扁平视图，每条都自带 `doctorId`，调用方按它分发即可。
+ */
 export function collectWrites(plan: ShiftCyclePlan): readonly DayOutcome[] {
-  return plan.outcomes.filter((outcome) => outcome.action === 'write' || outcome.action === 'overwrite');
+  return plan.outcomes.filter(
+    (outcome) => outcome.action === 'write' || outcome.action === 'overwrite',
+  );
 }

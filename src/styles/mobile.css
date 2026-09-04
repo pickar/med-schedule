@@ -209,6 +209,13 @@
   .sequence-chip { width: 100%; }
   .cycle-preview__item { grid-template-columns: 44px 24px 1fr auto; }
 
+  /* 多医生起始位：窄屏竖排，避免两个选项挤在一行误触 */
+  .shift-cycle__radio-row { flex-direction: column; gap: var(--sp-2); }
+
+  /* 分组预览头部在窄屏换成两行：姓名+起始位一行，写入/跳过/展开一行 */
+  .cycle-doctor__head { flex-wrap: wrap; row-gap: var(--sp-1); }
+  .cycle-doctor__toggle { margin-left: 0; }
+
   /* 移动端触摸靶 ≥ 32px：序列上移/下移/删除图标按钮放大到 32×32 */
   .sequence-chip__actions .btn {
     min-width: 32px;

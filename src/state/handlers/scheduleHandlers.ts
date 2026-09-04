@@ -8,10 +8,16 @@
  *    留空壳会让「本月是否有排班」这类判断到处需要额外过滤。
  */
 
-import type { DaySchedule, MonthSchedule, ScheduleEntry, ShiftId } from '../../types/domain';
+import type {
+  DaySchedule,
+  LeaveRange,
+  MonthSchedule,
+  ScheduleEntry,
+  ShiftId,
+} from '../../types/domain';
 import type { AppState } from '../../types/state';
 import { monthOfDate } from '../../lib/date';
-import type { DayOutcome, ShiftCyclePlan } from '../../core/shiftCycle';
+import type { CycleStartMode, DayOutcome, ShiftCyclePlan } from '../../core/shiftCycle';
 import { collectWrites, planShiftCycle } from '../../core/shiftCycle';
 
 /** 取某月排班，不存在时返回空对象（注意：返回的是新对象，只读用途） */
@@ -198,34 +204,44 @@ export function countLockedCells(state: AppState, month: string): number {
 }
 
 /**
- * 应用一段轮班（形态 A：班次序列循环·按医生）。
+ * 应用一段轮班（形态 A：班次序列循环·按医生，支持一次套给多位医生）。
  *
  * 入口从 state 自取医生 / leaves / schedules 并重算 plan，保证「预览即实际写入」。
- * 若医生不存在或实际落库条目为空，返回原 state 引用（不进撤销栈）。
+ * 目标医生里若有已不存在的 id（比如刚被删掉）直接过滤，不影响其余人。
+ * 若实际落库条目为空，返回原 state 引用（不进撤销栈）。
  * 逐月用私有 `withMonth/withDay` 写入，未涉及月份保持原引用以保 memo。
  */
 export function applyShiftCycle(
   state: AppState,
   payload: {
-    doctorId: string;
+    doctorIds: readonly string[];
     sequence: ShiftId[];
     startDate: string;
     endDate: string;
     overwrite: boolean;
+    startMode: CycleStartMode;
   },
 ): AppState {
-  const doctor = state.doctors.find((d) => d.id === payload.doctorId);
-  if (!doctor) {
+  // 过滤掉已不存在的医生（名册可能刚被改过），并保持 payload 顺序 = 名册顺序语义
+  const targets = payload.doctorIds.filter((id) => state.doctors.some((d) => d.id === id));
+  if (targets.length === 0) {
     return state;
   }
 
+  // 请假是个人属性：批量时按人各取一份，绝不能共用
+  const leavesByDoctor: Record<string, readonly LeaveRange[]> = {};
+  for (const doctor of state.doctors) {
+    leavesByDoctor[doctor.id] = doctor.leaves ?? [];
+  }
+
   const plan: ShiftCyclePlan = planShiftCycle({
-    doctorId: payload.doctorId,
+    doctorIds: targets,
     sequence: payload.sequence,
     startDate: payload.startDate,
     endDate: payload.endDate,
     overwrite: payload.overwrite,
-    leaves: doctor.leaves ?? [],
+    startMode: payload.startMode,
+    leavesByDoctor,
     schedules: state.schedules,
   });
 
@@ -252,17 +268,18 @@ export function applyShiftCycle(
     const monthSchedule = next.schedules[month] ?? {};
     let day = monthSchedule;
     for (const outcome of outcomes) {
-      const existing = day[outcome.date]?.[payload.doctorId];
+      const doctorId = outcome.doctorId;
+      const existing = day[outcome.date]?.[doctorId];
       const entry: ScheduleEntry = {
-        doctorId: payload.doctorId,
+        doctorId,
         shiftType: outcome.shiftType,
         // 手动轮班写入：非轮流产物、标记手动、兜底保留原锁定态
         isRotation: false,
         manual: true,
-        locked: existing?.locked ?? false,
+        ...(existing?.locked ? { locked: true } : {}),
       };
       const prevDay = day[outcome.date] ?? {};
-      day = withDay(day, outcome.date, { ...prevDay, [payload.doctorId]: entry });
+      day = withDay(day, outcome.date, { ...prevDay, [doctorId]: entry });
     }
     next = withMonth(next, month, day);
   }

@@ -5,6 +5,7 @@
  * （`noFallthroughCasesInSwitch` 已开启）。
  */
 
+import type { CycleStartMode } from '../core/shiftCycle';
 import type {
   Diagnostic,
   Doctor,
@@ -154,11 +155,14 @@ export type Action =
   | {
       type: 'schedule/applyShiftCycle';
       payload: {
-        doctorId: string;
+        /** 目标医生 id 列表；单医生时长度 1，选「所有医生」时为名册全体 */
+        doctorIds: string[];
         sequence: ShiftId[];
         startDate: string;
         endDate: string;
         overwrite: boolean;
+        /** 多医生起始位策略；单医生时不影响结果 */
+        startMode: CycleStartMode;
       };
     }
   // --- 自定义班次 ---

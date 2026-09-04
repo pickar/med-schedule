@@ -232,8 +232,13 @@ function labelOf(state: AppState, action: DataAction): string {
       return `生成${formatMonthLabel(action.payload.month)}排班`;
     case 'schedule/clearMonth':
       return `清空${formatMonthLabel(action.payload.month)}排班`;
-    case 'schedule/applyShiftCycle':
-      return `轮班：${nameOf(state, action.payload.doctorId)} ${formatMD(action.payload.startDate)}–${formatMD(action.payload.endDate)}`;
+    case 'schedule/applyShiftCycle': {
+      const range = `${formatMD(action.payload.startDate)}–${formatMD(action.payload.endDate)}`;
+      const ids = action.payload.doctorIds;
+      return ids.length > 1
+        ? `轮班：${ids.length} 位医生 ${range}`
+        : `轮班：${nameOf(state, ids[0] ?? '')} ${range}`;
+    }
     case 'shiftDef/add':
       return `新增班次「${action.payload.label || '未命名'}」`;
     case 'shiftDef/update':
